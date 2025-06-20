@@ -1,50 +1,77 @@
+import { useTheme } from '@react-navigation/native';
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
 
 import { HapticTab } from '@/components/HapticTab';
 import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { Home, LockIcon, Settings } from 'lucide-react-native';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const { colors } = useTheme();
+  const themeColors = useThemeColors();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: themeColors.primary,
+        tabBarInactiveTintColor: themeColors.textMuted,
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
-          },
-          default: {},
-        }),
+        tabBarStyle: {
+          borderTopColor: colors.border,
+          borderTopWidth: 1,
+          ...Platform.select({
+            ios: {
+              position: 'absolute',
+              backgroundColor: 'transparent',
+            },
+            default: {
+              backgroundColor: colors.card,
+            },
+          }),
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '500',
+        },
       }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <Home size={28} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Home 
+              size={28} 
+              color={focused ? themeColors.primary : themeColors.textMuted} 
+            />
+          ),
         }}
       />
       <Tabs.Screen
         name="codegen"
         options={{
           title: 'Code Gen',
-          tabBarIcon: ({ color }) => <LockIcon size={28} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <LockIcon 
+              size={28} 
+              color={focused ? themeColors.primary : themeColors.textMuted} 
+            />
+          ),
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',
-          tabBarIcon: ({ color }) => <Settings size={28} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Settings 
+              size={28} 
+              color={focused ? themeColors.primary : themeColors.textMuted} 
+            />
+          ),
         }}
       />
     </Tabs>

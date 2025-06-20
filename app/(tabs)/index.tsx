@@ -11,13 +11,9 @@ import {
   ChevronRight,
   Clock,
   Eye,
-  Gamepad2,
-  GraduationCap,
   Home,
   MoreHorizontal,
   Phone,
-  Smartphone,
-  Tv,
   Zap
 } from 'lucide-react-native';
 import React from 'react';
@@ -39,13 +35,7 @@ const DashboardScreen = ({
       color: themeColors.success,
       onPress: () => Alert.alert('Airtime', 'Navigate to airtime purchase')
     },
-    {
-      id: 2,
-      icon: Smartphone,
-      title: 'Data',
-      color: themeColors.secondary,
-      onPress: () => Alert.alert('Data', 'Navigate to data purchase')
-    },
+
     {
       id: 3,
       icon: Clock,
@@ -53,13 +43,7 @@ const DashboardScreen = ({
       color: colors.text,
       onPress: () => Alert.alert('Betting', 'Navigate to betting')
     },
-    {
-      id: 4,
-      icon: Tv,
-      title: 'TV',
-      color: colors.text,
-      onPress: () => Alert.alert('TV', 'Navigate to TV subscription')
-    },
+  
     {
       id: 5,
       icon: Zap,
@@ -67,20 +51,8 @@ const DashboardScreen = ({
       color: themeColors.warning,
       onPress: handleElectricityBill
     },
-    {
-      id: 6,
-      icon: Gamepad2,
-      title: 'Games',
-      color: colors.text,
-      onPress: () => Alert.alert('Games', 'Navigate to games')
-    },
-    {
-      id: 7,
-      icon: GraduationCap,
-      title: 'School',
-      color: colors.text,
-      onPress: () => Alert.alert('School', 'Navigate to school fees')
-    },
+
+
     {
       id: 8,
       icon: MoreHorizontal,
@@ -237,7 +209,7 @@ const DashboardScreen = ({
           </ThemedView>
           
           {/* Grid Layout for Bills - 4x2 Grid */}
-          <ThemedView style={tw`w-full`}>
+          <ThemedView style={tw`w-full mx-2`}>
             {/* Render bills in rows of 4 */}
             {Array.from({ length: Math.ceil(billsData.length / 4) }, (_, rowIndex) => (
               <ThemedView key={rowIndex} style={tw`flex-row justify-between ${rowIndex < Math.ceil(billsData.length / 4) - 1 ? 'mb-6' : ''}`}>

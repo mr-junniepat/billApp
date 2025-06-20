@@ -1,9 +1,18 @@
+import { ThemedButton } from '@/components/ThemedButton';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { ThemedInput } from '@/components/ThemeInput';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { useTheme } from '@react-navigation/native';
 import { AlertTriangle, ArrowLeft, ChevronDown, Send, Shield } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { Alert, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StatusBar } from 'react-native';
 import tw from 'twrnc';
 
 const ReportScamScreen = ({ onBack }) => {
+  const { colors } = useTheme();
+  const themeColors = useThemeColors();
+  
   const [selectedType, setSelectedType] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,123 +73,138 @@ const ReportScamScreen = ({ onBack }) => {
   };
 
   return (
-    <View style={tw`flex-1 bg-black`}>
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+    <ThemedView style={tw`flex-1`}>
+      <StatusBar 
+        barStyle={colors.background === '#000000' ? 'light-content' : 'dark-content'} 
+        backgroundColor={colors.background} 
+      />
       
       {/* Header */}
-      <View style={tw`flex-row items-center px-6 pt-12 pb-6`}>
-        <TouchableOpacity onPress={handleBack}>
-          <ArrowLeft size={24} color="#ffffff" />
-        </TouchableOpacity>
-        <Text style={tw`text-white text-xl font-medium ml-4`}>Report a Scam</Text>
-      </View>
+      <ThemedView style={tw`flex-row items-center px-6 pt-12 pb-6`}>
+        <ThemedButton variant="ghost" onPress={handleBack}>
+          <ArrowLeft size={24} color={colors.text} />
+        </ThemedButton>
+        <ThemedText type="title" style={tw`text-xl ml-4`}>Report a Scam</ThemedText>
+      </ThemedView>
 
       <ScrollView style={tw`flex-1`} showsVerticalScrollIndicator={false}>
-        <View style={tw`px-6`}>
+        <ThemedView style={tw`px-6`}>
           {/* Warning Section */}
-          <View style={tw`bg-red-900 bg-opacity-30 rounded-2xl p-4 mb-6 border border-red-800`}>
-            <View style={tw`flex-row items-center mb-2`}>
-              <AlertTriangle size={20} color="#ef4444" style={tw`mr-2`} />
-              <Text style={tw`text-red-300 font-semibold`}>Security Alert</Text>
-            </View>
-            <Text style={tw`text-red-200 text-sm leading-5`}>
+          <ThemedView style={[tw`rounded-2xl p-4 mb-6 border`, 
+                            { backgroundColor: themeColors.error + '20', borderColor: themeColors.error + '40' }]}>
+            <ThemedView style={tw`flex-row items-center mb-2`}>
+              <AlertTriangle size={20} color={themeColors.error} style={tw`mr-2`} />
+              <ThemedText style={[tw`font-semibold`, { color: themeColors.error }]}>
+                Security Alert
+              </ThemedText>
+            </ThemedView>
+            <ThemedText style={[tw`text-sm leading-5`, { color: themeColors.error + 'CC' }]}>
               Help us keep the community safe by reporting fraudulent activities. Your report helps protect other users.
-            </Text>
-          </View>
+            </ThemedText>
+          </ThemedView>
 
           {/* Report Form */}
-          <View style={tw`bg-gray-900 rounded-3xl p-6 mb-6`}>
-            <Text style={tw`text-white text-lg font-medium mb-6`}>Incident Details</Text>
+          <ThemedView variant="card" style={tw`p-6 mb-6`}>
+            <ThemedText type="subtitle" style={tw`mb-6`}>Incident Details</ThemedText>
 
             {/* Scam Type Dropdown */}
-            <View style={tw`mb-6`}>
-              <Text style={tw`text-gray-400 text-sm mb-2`}>Type of Scam/Fraud</Text>
-              <TouchableOpacity
-                style={tw`bg-gray-800 rounded-2xl px-4 py-4 flex-row items-center justify-between`}
+            <ThemedView style={tw`mb-6`}>
+              <ThemedText type="caption" style={tw`text-sm mb-2`}>Type of Scam/Fraud</ThemedText>
+              <ThemedButton
+                variant="ghost"
+                style={[tw`rounded-2xl px-4 py-4 flex-row items-center justify-between`, 
+                       { backgroundColor: colors.card }]}
                 onPress={() => setShowTypeDropdown(!showTypeDropdown)}
               >
-                <Text style={tw`${selectedType ? 'text-white' : 'text-gray-500'} text-base`}>
+                <ThemedText style={[tw`text-base`, selectedType ? {} : { color: themeColors.textMuted }]}>
                   {selectedType || 'Select scam type'}
-                </Text>
+                </ThemedText>
                 <ChevronDown 
                   size={20} 
-                  color="#6b7280" 
-                  style={tw`transform ${showTypeDropdown ? 'rotate-180' : 'rotate-0'}`} 
+                  color={themeColors.textMuted}
+                  style={[tw`transform`, showTypeDropdown && tw`rotate-180`]} 
                 />
-              </TouchableOpacity>
+              </ThemedButton>
 
               {showTypeDropdown && (
-                <View style={tw`bg-gray-800 rounded-2xl mt-2 border border-gray-700`}>
+                <ThemedView style={[tw`rounded-2xl mt-2 border`, 
+                                  { backgroundColor: colors.card, borderColor: colors.border }]}>
                   {scamTypes.map((type, index) => (
-                    <TouchableOpacity
+                    <ThemedButton
                       key={index}
-                      style={tw`px-4 py-3 ${index < scamTypes.length - 1 ? 'border-b border-gray-700' : ''}`}
+                      variant="ghost"
+                      style={[tw`px-4 py-3 border-b`, 
+                             index < scamTypes.length - 1 && { borderBottomColor: colors.border },
+                             index === scamTypes.length - 1 && tw`border-b-0`]}
                       onPress={() => selectScamType(type)}
                     >
-                      <Text style={tw`text-white text-base`}>{type}</Text>
-                    </TouchableOpacity>
+                      <ThemedText style={tw`text-base text-left w-full`}>{type}</ThemedText>
+                    </ThemedButton>
                   ))}
-                </View>
+                </ThemedView>
               )}
-            </View>
+            </ThemedView>
 
             {/* Description */}
-            <View style={tw`mb-6`}>
-              <Text style={tw`text-gray-400 text-sm mb-2`}>Description</Text>
-              <View style={tw`bg-gray-800 rounded-2xl px-4 py-4`}>
-                <TextInput
-                  style={tw`text-white text-base min-h-24`}
+            <ThemedView style={tw`mb-6`}>
+              <ThemedText type="caption" style={tw`text-sm mb-2`}>Description</ThemedText>
+              <ThemedView style={[tw`rounded-2xl px-4 py-4`, { backgroundColor: colors.card }]}>
+                <ThemedInput
+                  style={tw`text-base min-h-24`}
                   value={description}
                   onChangeText={setDescription}
                   placeholder="Please provide details about the scam or fraudulent activity..."
-                  placeholderTextColor="#6b7280"
                   multiline
-                  textAlignVertical="top"
                 />
-              </View>
-              <Text style={tw`text-gray-500 text-xs mt-1`}>
+              </ThemedView>
+              <ThemedText type="caption" style={tw`text-xs mt-1`}>
                 Include as much detail as possible (phone numbers, emails, amounts, etc.)
-              </Text>
-            </View>
+              </ThemedText>
+            </ThemedView>
 
             {/* Submit Button */}
-            <TouchableOpacity
-              style={tw`bg-red-500 rounded-2xl py-4 flex-row items-center justify-center ${isSubmitting ? 'opacity-70' : ''}`}
+            <ThemedButton
+              style={[tw`py-4 flex-row items-center justify-center rounded-2xl`, 
+                     { backgroundColor: themeColors.error },
+                     isSubmitting && tw`opacity-70`]}
               onPress={handleSubmitReport}
               disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <>
-                  <View style={tw`w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3`} />
-                  <Text style={tw`text-white text-lg font-semibold`}>Submitting...</Text>
+                  <ThemedView style={tw`w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-3`} />
+                  <ThemedText style={tw`text-white text-lg font-semibold`}>Submitting...</ThemedText>
                 </>
               ) : (
                 <>
                   <Send size={20} color="#ffffff" style={tw`mr-3`} />
-                  <Text style={tw`text-white text-lg font-semibold`}>Submit Report</Text>
+                  <ThemedText style={tw`text-white text-lg font-semibold`}>Submit Report</ThemedText>
                 </>
               )}
-            </TouchableOpacity>
-          </View>
+            </ThemedButton>
+          </ThemedView>
 
           {/* Security Tips */}
-          <View style={tw`bg-blue-900 bg-opacity-30 rounded-2xl p-4 border border-blue-800`}>
-            <View style={tw`flex-row items-center mb-2`}>
-              <Shield size={20} color="#3b82f6" style={tw`mr-2`} />
-              <Text style={tw`text-blue-300 font-semibold`}>Security Tips:</Text>
-            </View>
-            <Text style={tw`text-blue-200 text-sm leading-5`}>
+          <ThemedView style={[tw`rounded-2xl p-4 border`, 
+                            { backgroundColor: themeColors.info + '20', borderColor: themeColors.info + '40' }]}>
+            <ThemedView style={tw`flex-row items-center mb-2`}>
+              <Shield size={20} color={themeColors.info} style={tw`mr-2`} />
+              <ThemedText style={[tw`font-semibold`, { color: themeColors.info }]}>
+                Security Tips:
+              </ThemedText>
+            </ThemedView>
+            <ThemedText style={[tw`text-sm leading-5`, { color: themeColors.info + 'CC' }]}>
               • Never share your security codes with anyone{'\n'}
               • Hoabill will never ask for codes via phone/email{'\n'}
               • Always verify requests through official channels{'\n'}
               • Report suspicious activities immediately
-            </Text>
-          </View>
-        </View>
+            </ThemedText>
+          </ThemedView>
+        </ThemedView>
 
-        <View style={tw`h-32`} />
+        <ThemedView style={tw`h-32`} />
       </ScrollView>
-    </View>
+    </ThemedView>
   );
 };
 

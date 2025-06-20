@@ -1,9 +1,18 @@
+import { ThemedButton } from '@/components/ThemedButton';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { ThemedInput } from '@/components/ThemeInput';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { useTheme } from '@react-navigation/native';
 import { ArrowLeft, Copy, Gift, Mail, MessageSquare, Share2, Users } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { Alert, ScrollView, Share, StatusBar, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, Share, StatusBar } from 'react-native';
 import tw from 'twrnc';
 
 const ReferFriendScreen = ({ onBack }) => {
+  const { colors } = useTheme();
+  const themeColors = useThemeColors();
+  
   const [referralCode] = useState('Hoabill2025');
   const [friendEmail, setFriendEmail] = useState('');
 
@@ -56,120 +65,132 @@ const ReferFriendScreen = ({ onBack }) => {
   };
 
   return (
-    <View style={tw`flex-1 bg-black`}>
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+    <ThemedView style={tw`flex-1`}>
+      <StatusBar 
+        barStyle={colors.background === '#000000' ? 'light-content' : 'dark-content'} 
+        backgroundColor={colors.background} 
+      />
       
       {/* Header */}
-      <View style={tw`flex-row items-center px-6 pt-12 pb-6`}>
-        <TouchableOpacity onPress={handleBack}>
-          <ArrowLeft size={24} color="#ffffff" />
-        </TouchableOpacity>
-        <Text style={tw`text-white text-xl font-medium ml-4`}>Refer a Friend</Text>
-      </View>
+      <ThemedView style={tw`flex-row items-center px-6 pt-12 pb-6`}>
+        <ThemedButton variant="ghost" onPress={handleBack}>
+          <ArrowLeft size={24} color={colors.text} />
+        </ThemedButton>
+        <ThemedText type="title" style={tw`text-xl ml-4`}>Refer a Friend</ThemedText>
+      </ThemedView>
 
       <ScrollView style={tw`flex-1`} showsVerticalScrollIndicator={false}>
-        <View style={tw`px-6`}>
+        <ThemedView style={tw`px-6`}>
           {/* Welcome Message */}
-          <View style={tw`items-center mb-8`}>
-            <View style={tw`w-20 h-20 bg-green-500 rounded-full items-center justify-center mb-4`}>
+          <ThemedView style={tw`items-center mb-8`}>
+            <ThemedView style={[tw`w-20 h-20 rounded-full items-center justify-center mb-4`, 
+                                { backgroundColor: themeColors.primary }]}>
               <Users size={32} color="#ffffff" />
-            </View>
-            <Text style={tw`text-white text-2xl font-bold mb-2 text-center`}>Invite Friends & Earn</Text>
-            <Text style={tw`text-gray-400 text-base text-center leading-6`}>
+            </ThemedView>
+            <ThemedText type="title" style={tw`mb-2 text-center`}>Invite Friends & Earn</ThemedText>
+            <ThemedText type="caption" style={tw`text-base text-center leading-6`}>
               Share Hoabill with your friends and family. You both get ₦500 when they join!
-            </Text>
-          </View>
+            </ThemedText>
+          </ThemedView>
 
           {/* Referral Code Section */}
-          <View style={tw`bg-gray-900 rounded-3xl p-6 mb-6`}>
-            <Text style={tw`text-white text-lg font-medium mb-4`}>Your Referral Code</Text>
-            <View style={tw`bg-gray-800 rounded-2xl p-4 mb-4`}>
-              <View style={tw`flex-row items-center justify-between`}>
-                <Text style={tw`text-green-400 text-2xl font-mono font-bold`}>{referralCode}</Text>
-                <TouchableOpacity onPress={handleCopyCode}>
-                  <Copy size={20} color="#10b981" />
-                </TouchableOpacity>
-              </View>
-            </View>
-            <TouchableOpacity
-              style={tw`bg-green-500 rounded-2xl py-3 flex-row items-center justify-center`}
+          <ThemedView variant="card" style={tw`p-6 mb-6`}>
+            <ThemedText type="subtitle" style={tw`mb-4`}>Your Referral Code</ThemedText>
+            <ThemedView variant="surface" style={tw`rounded-2xl p-4 mb-4`}>
+              <ThemedView style={tw`flex-row items-center justify-between`}>
+                <ThemedText style={[tw`text-2xl font-mono font-bold`, { color: themeColors.primary }]}>
+                  {referralCode}
+                </ThemedText>
+                <ThemedButton variant="ghost" onPress={handleCopyCode}>
+                  <Copy size={20} color={themeColors.primary} />
+                </ThemedButton>
+              </ThemedView>
+            </ThemedView>
+            <ThemedButton
+              variant="primary"
+              style={tw`py-3 flex-row items-center justify-center`}
               onPress={handleShareCode}
             >
               <Share2 size={20} color="#ffffff" style={tw`mr-2`} />
-              <Text style={tw`text-white font-semibold`}>Share Code</Text>
-            </TouchableOpacity>
-          </View>
+              <ThemedText style={tw`text-white font-semibold`}>Share Code</ThemedText>
+            </ThemedButton>
+          </ThemedView>
 
           {/* Invite by Email */}
-          <View style={tw`bg-gray-900 rounded-3xl p-6 mb-6`}>
-            <Text style={tw`text-white text-lg font-medium mb-4`}>Invite by Email</Text>
-            <View style={tw`flex-row items-center bg-gray-800 rounded-2xl px-4 py-3 mb-4`}>
-              <Mail size={20} color="#6b7280" style={tw`mr-3`} />
-              <TextInput
-                style={tw`flex-1 text-white text-base`}
+          <ThemedView variant="card" style={tw`p-6 mb-6`}>
+            <ThemedText type="subtitle" style={tw`mb-4`}>Invite by Email</ThemedText>
+            <ThemedView style={tw`mb-4`}>
+              <ThemedInput
+                icon={<Mail size={20} color={themeColors.textMuted} />}
                 value={friendEmail}
                 onChangeText={setFriendEmail}
                 placeholder="Enter friend's email"
-                placeholderTextColor="#6b7280"
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
-            </View>
-            <TouchableOpacity
-              style={tw`bg-blue-500 rounded-2xl py-3 flex-row items-center justify-center`}
+            </ThemedView>
+            <ThemedButton
+              style={[tw`py-3 flex-row items-center justify-center`, 
+                     { backgroundColor: themeColors.secondary }]}
               onPress={handleInviteByEmail}
             >
               <Mail size={20} color="#ffffff" style={tw`mr-2`} />
-              <Text style={tw`text-white font-semibold`}>Send Invitation</Text>
-            </TouchableOpacity>
-          </View>
+              <ThemedText style={tw`text-white font-semibold`}>Send Invitation</ThemedText>
+            </ThemedButton>
+          </ThemedView>
 
           {/* Social Sharing */}
-          <View style={tw`bg-gray-900 rounded-3xl p-6 mb-6`}>
-            <Text style={tw`text-white text-lg font-medium mb-4`}>Share on Social Media</Text>
-            <View style={tw`flex-row justify-between`}>
-              <TouchableOpacity
-                style={tw`bg-blue-600 rounded-2xl p-4 flex-1 items-center mr-2`}
+          <ThemedView variant="card" style={tw`p-6 mb-6`}>
+            <ThemedText type="subtitle" style={tw`mb-4`}>Share on Social Media</ThemedText>
+            <ThemedView style={tw`flex-row justify-between`}>
+              <ThemedButton
+                style={[tw`p-4 flex-1 items-center mr-2 rounded-2xl`, 
+                       { backgroundColor: '#25D366' }]} // WhatsApp green
                 onPress={() => handleSocialShare('WhatsApp')}
               >
                 <MessageSquare size={24} color="#ffffff" style={tw`mb-2`} />
-                <Text style={tw`text-white text-sm font-medium`}>WhatsApp</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={tw`bg-blue-500 rounded-2xl p-4 flex-1 items-center mx-1`}
+                <ThemedText style={tw`text-white text-sm font-medium`}>WhatsApp</ThemedText>
+              </ThemedButton>
+              <ThemedButton
+                style={[tw`p-4 flex-1 items-center mx-1 rounded-2xl`, 
+                       { backgroundColor: '#1877F2' }]} // Facebook blue
                 onPress={() => handleSocialShare('Facebook')}
               >
                 <Share2 size={24} color="#ffffff" style={tw`mb-2`} />
-                <Text style={tw`text-white text-sm font-medium`}>Facebook</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={tw`bg-blue-400 rounded-2xl p-4 flex-1 items-center ml-2`}
+                <ThemedText style={tw`text-white text-sm font-medium`}>Facebook</ThemedText>
+              </ThemedButton>
+              <ThemedButton
+                style={[tw`p-4 flex-1 items-center ml-2 rounded-2xl`, 
+                       { backgroundColor: '#1DA1F2' }]} // Twitter blue
                 onPress={() => handleSocialShare('Twitter')}
               >
                 <Share2 size={24} color="#ffffff" style={tw`mb-2`} />
-                <Text style={tw`text-white text-sm font-medium`}>Twitter</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+                <ThemedText style={tw`text-white text-sm font-medium`}>Twitter</ThemedText>
+              </ThemedButton>
+            </ThemedView>
+          </ThemedView>
 
           {/* Rewards Info */}
-          <View style={tw`bg-green-900 bg-opacity-30 rounded-2xl p-4 border border-green-800`}>
-            <View style={tw`flex-row items-center mb-2`}>
-              <Gift size={20} color="#10b981" style={tw`mr-2`} />
-              <Text style={tw`text-green-300 font-semibold`}>How it Works:</Text>
-            </View>
-            <Text style={tw`text-green-200 text-sm leading-5`}>
+          <ThemedView style={[tw`rounded-2xl p-4 border`, 
+                            { backgroundColor: themeColors.success + '20', borderColor: themeColors.success + '40' }]}>
+            <ThemedView style={tw`flex-row items-center mb-2`}>
+              <Gift size={20} color={themeColors.success} style={tw`mr-2`} />
+              <ThemedText style={[tw`font-semibold`, { color: themeColors.success }]}>
+                How it Works:
+              </ThemedText>
+            </ThemedView>
+            <ThemedText style={[tw`text-sm leading-5`, { color: themeColors.success + 'CC' }]}>
               • Share your referral code with friends{'\n'}
               • They sign up and verify their account{'\n'}
               • You both receive ₦500 bonus credit{'\n'}
               • No limit on referrals - invite more, earn more!
-            </Text>
-          </View>
-        </View>
+            </ThemedText>
+          </ThemedView>
+        </ThemedView>
 
-        <View style={tw`h-32`} />
+        <ThemedView style={tw`h-32`} />
       </ScrollView>
-    </View>
+    </ThemedView>
   );
 };
 
