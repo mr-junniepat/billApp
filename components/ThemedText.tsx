@@ -1,60 +1,57 @@
-import { StyleSheet, Text, type TextProps } from 'react-native';
-
-import { useThemeColor } from '@/hooks/useThemeColor';
+import { useTheme } from '@react-navigation/native';
+import React from 'react';
+import { Text, TextProps } from 'react-native';
+import tw from 'twrnc';
 
 export type ThemedTextProps = TextProps & {
-  lightColor?: string;
-  darkColor?: string;
-  type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link';
+  type?: 'default' | 'title' | 'subtitle' | 'link' | 'caption' | 'error' | 'success';
 };
 
-export function ThemedText({
-  style,
-  lightColor,
-  darkColor,
-  type = 'default',
-  ...rest
-}: ThemedTextProps) {
-  const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
+export function ThemedText({ style, type = 'default', ...rest }: ThemedTextProps) {
+  const { colors } = useTheme();
+
+  const getTypeStyles = () => {
+    switch (type) {
+      case 'title':
+        return tw`text-2xl font-bold`;
+      case 'subtitle':
+        return tw`text-lg font-semibold`;
+      case 'link':
+        return tw`text-base font-medium`;
+      case 'caption':
+        return tw`text-sm`;
+      case 'error':
+        return tw`text-base`;
+      case 'success':
+        return tw`text-base`;
+      default:
+        return tw`text-base`;
+    }
+  };
+
+  const getTypeColor = () => {
+    switch (type) {
+      case 'link':
+        return '#10b981'; // Green
+      case 'caption':
+        return colors.text + '80'; // 50% opacity
+      case 'error':
+        return '#ef4444'; // Red
+      case 'success':
+        return '#10b981'; // Green
+      default:
+        return colors.text;
+    }
+  };
 
   return (
     <Text
       style={[
-        { color },
-        type === 'default' ? styles.default : undefined,
-        type === 'title' ? styles.title : undefined,
-        type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
-        type === 'subtitle' ? styles.subtitle : undefined,
-        type === 'link' ? styles.link : undefined,
+        getTypeStyles(),
+        { color: getTypeColor() },
         style,
       ]}
       {...rest}
     />
   );
 }
-
-const styles = StyleSheet.create({
-  default: {
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  defaultSemiBold: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: '600',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    lineHeight: 32,
-  },
-  subtitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  link: {
-    lineHeight: 30,
-    fontSize: 16,
-    color: '#0a7ea4',
-  },
-});
