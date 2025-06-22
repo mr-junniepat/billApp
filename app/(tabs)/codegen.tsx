@@ -1,20 +1,25 @@
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { ThemedInput } from '@/components/ThemeInput';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useTheme } from '@react-navigation/native';
 import {
   AlertCircle,
+  Calendar,
   CheckCircle,
+  ChevronDown,
   Clock,
   Copy,
+  History,
   QrCode,
   RefreshCw,
   Share2,
-  Shield
+  Shield,
+  User
 } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
-import { Alert, Share, StatusBar } from 'react-native';
+import { Alert, ScrollView, Share, StatusBar } from 'react-native';
 import tw from 'twrnc';
 
 const CodeGenerationScreen = () => {
@@ -26,18 +31,91 @@ const CodeGenerationScreen = () => {
   const [timeRemaining, setTimeRemaining] = useState('');
   const [isActive, setIsActive] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  
+  // Form state for code creation
+  const [recipientName, setRecipientName] = useState('');
+  const [selectedDuration, setSelectedDuration] = useState(30); // minutes
+  const [showDurationDropdown, setShowDurationDropdown] = useState(false);
+  const [codeFor, setCodeFor] = useState('');
+  
+  // Code history state
+  const [codeHistory, setCodeHistory] = useState([
+    {
+      id: 1,
+      code: '456789',
+      recipientName: 'John Smith',
+      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+      expiresAt: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago (expired)
+      duration: 60,
+      isActive: false,
+      isUsed: true
+    },
+    {
+      id: 2,
+      code: '123456',
+      recipientName: 'Sarah Johnson',
+      createdAt: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
+      expiresAt: new Date(Date.now() + 90 * 60 * 1000), // expires in 1.5 hours
+      duration: 120,
+      isActive: true,
+      isUsed: false
+    },
+    {
+      id: 3,
+      code: '789012',
+      recipientName: 'Mike Wilson',
+      createdAt: new Date(Date.now() - 10 * 60 * 1000), // 10 minutes ago
+      expiresAt: new Date(Date.now() + 20 * 60 * 1000), // expires in 20 minutes
+      duration: 30,
+      isActive: true,
+      isUsed: false
+    }
+  ]);
+  const [showHistory, setShowHistory] = useState(false);
+
+  const durationOptions = [
+    { label: '15 minutes', value: 15 },
+    { label: '30 minutes', value: 30 },
+    { label: '1 hour', value: 60 },
+    { label: '2 hours', value: 120 },
+    { label: '4 hours', value: 240 },
+    { label: '6 hours', value: 360 },
+    { label: '12 hours', value: 720 },
+    { label: '24 hours', value: 1440 }
+  ];
 
   // Generate random 6-digit security code
   const generateSecurityCode = () => {
+    if (!recipientName.trim()) {
+      Alert.alert('Error', 'Please enter the recipient\'s name');
+      return;
+    }
+
     setIsGenerating(true);
     
     setTimeout(() => {
       const code = Math.floor(100000 + Math.random() * 900000).toString();
       const expiry = new Date();
-      expiry.setMinutes(expiry.getMinutes() + 30); // 30 minutes validity
+      expiry.setMinutes(expiry.getMinutes() + selectedDuration);
+      const createdAt = new Date();
+      
+      // Add to history
+      const newCode = {
+        id: Date.now(),
+        code: code,
+        recipientName: recipientName,
+        createdAt: createdAt,
+        expiresAt: expiry,
+        duration: selectedDuration,
+        isActive: true,
+        isUsed: false
+      };
+      
+      setCodeHistory(prev => [newCode, ...prev]);
       
       setSecurityCode(code);
       setExpiryTime(expiry);
+      setCodeFor(recipientName);
       setIsActive(true);
       setIsGenerating(false);
     }, 1500); // Simulate generation delay
@@ -58,9 +136,15 @@ const CodeGenerationScreen = () => {
         return;
       }
 
-      const minutes = Math.floor(diff / (1000 * 60));
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-      setTimeRemaining(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+
+      if (hours > 0) {
+        setTimeRemaining(`${hours}h ${minutes}m ${seconds}s`);
+      } else {
+        setTimeRemaining(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+      }
     }, 1000);
 
     return () => clearInterval(timer);
@@ -71,7 +155,7 @@ const CodeGenerationScreen = () => {
     
     try {
       await Share.share({
-        message: `Security Code: ${securityCode}\nValid until: ${expiryTime?.toLocaleTimeString()}`,
+        message: `Security Code for ${codeFor}: ${securityCode}\nValid until: ${expiryTime?.toLocaleString()}\n\nGenerated via Hoabill Security`,
       });
     } catch (error) {
       Alert.alert('Error', 'Failed to share code');
@@ -83,7 +167,7 @@ const CodeGenerationScreen = () => {
 
     try {
       await Share.share({
-        message: `My estate access code: ${securityCode}\nValid until: ${expiryTime?.toLocaleTimeString()}\n\nGenerated via Hoabill Security`,
+        message: `Estate Access Code for ${codeFor}\n\nCode: ${securityCode}\nValid until: ${expiryTime?.toLocaleString()}\n\nGenerated via Hoabill Security`,
         title: 'Estate Access Code'
       });
     } catch (error) {
@@ -99,6 +183,88 @@ const CodeGenerationScreen = () => {
     Alert.alert('QR Code', 'QR Code feature coming soon!');
   };
 
+  const resetForm = () => {
+    setSecurityCode('');
+    setExpiryTime(null);
+    setTimeRemaining('');
+    setIsActive(false);
+    setCodeFor('');
+    setRecipientName('');
+    setSelectedDuration(30);
+  };
+
+  const selectDuration = (duration) => {
+    setSelectedDuration(duration);
+    setShowDurationDropdown(false);
+  };
+
+  const getDurationLabel = () => {
+    const option = durationOptions.find(opt => opt.value === selectedDuration);
+    return option ? option.label : '30 minutes';
+  };
+
+  const getRelativeTime = (date) => {
+    const now = new Date();
+    const diff = Math.abs(now - date);
+    const minutes = Math.floor(diff / (1000 * 60));
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
+    if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    return 'Just now';
+  };
+
+  const getTimeRemaining = (expiresAt) => {
+    const now = new Date();
+    const diff = expiresAt.getTime() - now.getTime();
+
+    if (diff <= 0) return 'Expired';
+
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+    if (hours > 0) return `${hours}h ${minutes}m left`;
+    return `${minutes}m left`;
+  };
+
+  const getCodeStatus = (codeItem) => {
+    const now = new Date();
+    if (codeItem.isUsed) return { status: 'Used', color: themeColors.textMuted };
+    if (now > codeItem.expiresAt) return { status: 'Expired', color: themeColors.error };
+    return { status: 'Active', color: themeColors.success };
+  };
+
+  const shareHistoryCode = async (codeItem) => {
+    try {
+      await Share.share({
+        message: `Estate Access Code for ${codeItem.recipientName}\n\nCode: ${codeItem.code}\nValid until: ${codeItem.expiresAt.toLocaleString()}\n\nGenerated via Hoabill Security`,
+        title: 'Estate Access Code'
+      });
+    } catch (error) {
+      Alert.alert('Error', 'Failed to share code');
+    }
+  };
+
+  const markCodeAsUsed = (codeId) => {
+    Alert.alert(
+      'Mark as Used',
+      'Has this code been used by the visitor?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Mark Used', 
+          onPress: () => {
+            setCodeHistory(prev => prev.map(code => 
+              code.id === codeId ? { ...code, isUsed: true } : code
+            ));
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <ThemedView style={tw`flex-1`}>
       <StatusBar 
@@ -106,128 +272,290 @@ const CodeGenerationScreen = () => {
         backgroundColor={colors.background} 
       />
       
-      {/* Header */}
-      <ThemedView style={tw`px-6 pt-12 pb-6`}>
-        <ThemedView style={tw`flex-row items-center mb-4`}>
-          <Shield size={24} color={themeColors.success} style={tw`mr-3`} />
-          <ThemedText type="title">Security Access</ThemedText>
-        </ThemedView>
-        <ThemedText type="caption" style={tw`text-base`}>
-          Generate a secure code for estate gate access
-        </ThemedText>
-      </ThemedView>
-
-      {/* Main Content */}
-      <ThemedView style={tw`flex-1 px-6`}>
-        {/* Code Display Card */}
-        <ThemedView variant="card" style={[tw`p-8 mb-6 border`, { borderColor: colors.border }]}>
-          <ThemedView style={tw`items-center`}>
-            {/* Status Indicator */}
-            <ThemedView style={tw`flex-row items-center mb-6`}>
-              {isActive ? (
-                <>
-                  <CheckCircle size={20} color={themeColors.success} style={tw`mr-2`} />
-                  <ThemedText type="success" style={tw`font-semibold`}>Active Code</ThemedText>
-                </>
-              ) : (
-                <>
-                  <AlertCircle size={20} color={themeColors.textMuted} style={tw`mr-2`} />
-                  <ThemedText type="caption" style={tw`font-semibold`}>No Active Code</ThemedText>
-                </>
-              )}
+      <ScrollView style={tw`flex-1`} showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <ThemedView style={tw`px-6 pt-12 pb-6`}>
+          <ThemedView style={tw`flex-row items-center justify-between mb-4`}>
+            <ThemedView style={tw`flex-row items-center`}>
+              <Shield size={24} color={themeColors.success} style={tw`mr-3`} />
+              <ThemedText type="title">Security Access</ThemedText>
             </ThemedView>
+            <ThemedButton 
+              variant="ghost" 
+              onPress={() => setShowHistory(!showHistory)}
+              style={tw`flex-row items-center`}
+            >
+              <History size={20} color={themeColors.primary} style={tw`mr-2`} />
+              <ThemedText type="link">{showHistory ? 'Hide' : 'History'}</ThemedText>
+            </ThemedButton>
+          </ThemedView>
+          <ThemedText type="caption" style={tw`text-base`}>
+            Generate a secure code for estate gate access
+          </ThemedText>
+        </ThemedView>
 
-            {/* Security Code */}
-            {securityCode ? (
-              <ThemedView style={tw`items-center mb-6`}>
-                <ThemedText style={tw`text-6xl font-mono font-bold tracking-wider mb-2`}>
-                  {securityCode}
-                </ThemedText>
-                <ThemedView style={tw`flex-row items-center`}>
-                  <Clock size={16} color={themeColors.textMuted} style={tw`mr-2`} />
-                  <ThemedText type="caption" style={tw`text-sm`}>
-                    {isActive ? `Expires in ${timeRemaining}` : 'Code expired'}
+        <ThemedView style={tw`px-6`}>
+          {/* Code History Section */}
+          {showHistory && (
+            <ThemedView variant="card" style={[tw`p-6 mb-6 border`, { borderColor: colors.border }]}>
+              <ThemedView style={tw`flex-row items-center justify-between mb-4`}>
+                <ThemedText type="subtitle">Recent Access Codes</ThemedText>
+                <ThemedText type="caption">{codeHistory.length} total</ThemedText>
+              </ThemedView>
+
+              {codeHistory.length === 0 ? (
+                <ThemedView style={tw`items-center py-8`}>
+                  <History size={48} color={themeColors.textMuted} style={tw`mb-4`} />
+                  <ThemedText type="caption" style={tw`text-center`}>
+                    No codes generated yet{'\n'}Create your first access code below
                   </ThemedText>
                 </ThemedView>
-              </ThemedView>
-            ) : (
-              <ThemedView style={tw`items-center mb-6 py-8`}>
-                <Shield size={48} color={themeColors.textMuted} style={tw`mb-4`} />
-                <ThemedText style={tw`text-lg text-center mb-2`} type="caption">
-                  No security code generated
-                </ThemedText>
-                <ThemedText type="caption" style={tw`text-sm text-center`}>
-                  Tap "Generate Code" to create a new access code
-                </ThemedText>
-              </ThemedView>
-            )}
+              ) : (
+                <ThemedView style={tw`space-y-4`}>
+                  {codeHistory.slice(0, 5).map((codeItem, index) => {
+                    const status = getCodeStatus(codeItem);
+                    const isExpired = new Date() > codeItem.expiresAt;
+                    
+                    return (
+                      <ThemedView 
+                        key={codeItem.id}
+                        style={[tw`p-4 rounded-2xl border-b`, 
+                               index < Math.min(codeHistory.length, 5) - 1 && { borderBottomColor: colors.border },
+                               index === Math.min(codeHistory.length, 5) - 1 && tw`border-b-0`]}
+                      >
+                        <ThemedView style={tw`flex-row items-center justify-between mb-2`}>
+                          <ThemedView style={tw`flex-1`}>
+                            <ThemedText style={tw`font-semibold mb-1`}>{codeItem.recipientName}</ThemedText>
+                            <ThemedView style={tw`flex-row items-center`}>
+                              <ThemedText style={tw`font-mono text-lg mr-4`}>{codeItem.code}</ThemedText>
+                              <ThemedText style={[tw`text-xs px-2 py-1 rounded-full`, 
+                                                { backgroundColor: status.color + '20', color: status.color }]}>
+                                {status.status}
+                              </ThemedText>
+                            </ThemedView>
+                          </ThemedView>
+                          
+                          <ThemedView style={tw`flex-row items-center`}>
+                            {!codeItem.isUsed && !isExpired && (
+                              <ThemedButton 
+                                variant="ghost" 
+                                style={tw`mr-2 p-2`}
+                                onPress={() => shareHistoryCode(codeItem)}
+                              >
+                                <Share2 size={16} color={themeColors.textMuted} />
+                              </ThemedButton>
+                            )}
+                            
+                            {!codeItem.isUsed && !isExpired && (
+                              <ThemedButton 
+                                variant="ghost" 
+                                style={tw`p-2`}
+                                onPress={() => markCodeAsUsed(codeItem.id)}
+                              >
+                                <CheckCircle size={16} color={themeColors.success} />
+                              </ThemedButton>
+                            )}
+                          </ThemedView>
+                        </ThemedView>
+                        
+                        <ThemedView style={tw`flex-row items-center justify-between`}>
+                          <ThemedText type="caption" style={tw`text-xs`}>
+                            Created {getRelativeTime(codeItem.createdAt)}
+                          </ThemedText>
+                          <ThemedText type="caption" style={tw`text-xs`}>
+                            {isExpired || codeItem.isUsed ? 
+                              `Expired ${getRelativeTime(codeItem.expiresAt)}` : 
+                              getTimeRemaining(codeItem.expiresAt)
+                            }
+                          </ThemedText>
+                        </ThemedView>
+                      </ThemedView>
+                    );
+                  })}
+                  
+                  {codeHistory.length > 5 && (
+                    <ThemedButton variant="ghost" style={tw`py-2`}>
+                      <ThemedText type="link">View All ({codeHistory.length - 5} more)</ThemedText>
+                    </ThemedButton>
+                  )}
+                </ThemedView>
+              )}
+            </ThemedView>
+          )}
+          {!securityCode ? (
+            /* Code Creation Form */
+            <ThemedView variant="card" style={[tw`p-6 mb-6 border`, { borderColor: colors.border }]}>
+              <ThemedText type="subtitle" style={tw`mb-6`}>Create New Access Code</ThemedText>
 
-            {/* Action Buttons Row */}
-            {securityCode && isActive && (
-              <ThemedView style={tw`flex-row justify-center w-full`}>
+              {/* Recipient Name */}
+              <ThemedView style={tw`mb-6`}>
+                <ThemedText type="caption" style={tw`text-sm mb-2`}>Recipient Name</ThemedText>
+                <ThemedInput
+                  icon={<User size={20} color={themeColors.textMuted} />}
+                  value={recipientName}
+                  onChangeText={setRecipientName}
+                  placeholder="Enter visitor's full name"
+                />
+              </ThemedView>
+
+              {/* Duration Selection */}
+              <ThemedView style={tw`mb-6`}>
+                <ThemedText type="caption" style={tw`text-sm mb-2`}>Code Duration</ThemedText>
                 <ThemedButton
-                  variant="secondary"
-                  style={tw`p-4 mr-3 flex-1 items-center`}
-                  onPress={copyToClipboard}
+                  variant="ghost"
+                  style={[tw`flex-row items-center justify-between p-4 rounded-2xl`, 
+                         { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 }]}
+                  onPress={() => setShowDurationDropdown(!showDurationDropdown)}
                 >
-                  <Copy size={20} color={themeColors.textMuted} style={tw`mb-1`} />
-                  <ThemedText type="caption" style={tw`text-xs`}>Copy</ThemedText>
-                </ThemedButton>
-                
-                <ThemedButton
-                  variant="secondary"
-                  style={tw`p-4 mr-3 flex-1 items-center`}
-                  onPress={shareCode}
-                >
-                  <Share2 size={20} color={themeColors.textMuted} style={tw`mb-1`} />
-                  <ThemedText type="caption" style={tw`text-xs`}>Share</ThemedText>
+                  <ThemedView style={tw`flex-row items-center`}>
+                    <Calendar size={20} color={themeColors.textMuted} style={tw`mr-3`} />
+                    <ThemedText>{getDurationLabel()}</ThemedText>
+                  </ThemedView>
+                  <ChevronDown 
+                    size={20} 
+                    color={themeColors.textMuted}
+                    style={[tw`transform`, showDurationDropdown && tw`rotate-180`]} 
+                  />
                 </ThemedButton>
 
+                {showDurationDropdown && (
+                  <ThemedView style={[tw`mt-2 rounded-2xl border`, 
+                                    { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    {durationOptions.map((option, index) => (
+                      <ThemedButton
+                        key={option.value}
+                        variant="ghost"
+                        style={[tw`p-4 border-b`, 
+                               index < durationOptions.length - 1 && { borderBottomColor: colors.border },
+                               index === durationOptions.length - 1 && tw`border-b-0`]}
+                        onPress={() => selectDuration(option.value)}
+                      >
+                        <ThemedText style={tw`text-left w-full`}>{option.label}</ThemedText>
+                      </ThemedButton>
+                    ))}
+                  </ThemedView>
+                )}
+              </ThemedView>
+
+              {/* Generate Button */}
+              <ThemedButton
+                variant="primary"
+                style={[tw`py-4 px-6 flex-row items-center justify-center`, 
+                       isGenerating && tw`opacity-70`]}
+                onPress={generateSecurityCode}
+                disabled={isGenerating}
+              >
+                {isGenerating ? (
+                  <>
+                    <RefreshCw size={24} color="#ffffff" style={tw`mr-3`} />
+                    <ThemedText style={tw`text-white text-lg font-semibold`}>Generating...</ThemedText>
+                  </>
+                ) : (
+                  <>
+                    <Shield size={24} color="#ffffff" style={tw`mr-3`} />
+                    <ThemedText style={tw`text-white text-lg font-semibold`}>Generate Code</ThemedText>
+                  </>
+                )}
+              </ThemedButton>
+            </ThemedView>
+          ) : (
+            /* Generated Code Display */
+            <ThemedView variant="card" style={[tw`p-8 mb-6 border`, { borderColor: colors.border }]}>
+              <ThemedView style={tw`items-center`}>
+                {/* Status Indicator */}
+                <ThemedView style={tw`flex-row items-center mb-6`}>
+                  {isActive ? (
+                    <>
+                      <CheckCircle size={20} color={themeColors.success} style={tw`mr-2`} />
+                      <ThemedText type="success" style={tw`font-semibold`}>Active Code</ThemedText>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle size={20} color={themeColors.error} style={tw`mr-2`} />
+                      <ThemedText type="error" style={tw`font-semibold`}>Code Expired</ThemedText>
+                    </>
+                  )}
+                </ThemedView>
+
+                {/* Recipient Info */}
+                <ThemedView style={tw`items-center mb-6`}>
+                  <ThemedText type="caption" style={tw`text-sm mb-1`}>Access Code for</ThemedText>
+                  <ThemedText type="subtitle" style={tw`mb-4`}>{codeFor}</ThemedText>
+                  
+                  {/* Security Code */}
+                  <ThemedText style={tw`text-6xl font-mono font-bold tracking-wider mb-2`}>
+                    {securityCode}
+                  </ThemedText>
+                  
+                  {/* Timer */}
+                  <ThemedView style={tw`flex-row items-center`}>
+                    <Clock size={16} color={themeColors.textMuted} style={tw`mr-2`} />
+                    <ThemedText type="caption" style={tw`text-sm`}>
+                      {isActive ? `Expires in ${timeRemaining}` : 'Code expired'}
+                    </ThemedText>
+                  </ThemedView>
+                </ThemedView>
+
+                {/* Action Buttons Row */}
+                {isActive && (
+                  <ThemedView style={tw`flex-row justify-center w-full mb-6`}>
+                    <ThemedButton
+                      variant="secondary"
+                      style={tw`p-4 mr-3 flex-1 items-center`}
+                      onPress={copyToClipboard}
+                    >
+                      <Copy size={20} color={themeColors.textMuted} style={tw`mb-1`} />
+                      <ThemedText type="caption" style={tw`text-xs`}>Copy</ThemedText>
+                    </ThemedButton>
+                    
+                    <ThemedButton
+                      variant="secondary"
+                      style={tw`p-4 mr-3 flex-1 items-center`}
+                      onPress={shareCode}
+                    >
+                      <Share2 size={20} color={themeColors.textMuted} style={tw`mb-1`} />
+                      <ThemedText type="caption" style={tw`text-xs`}>Share</ThemedText>
+                    </ThemedButton>
+
+                    <ThemedButton
+                      variant="secondary"
+                      style={tw`p-4 flex-1 items-center`}
+                      onPress={handleQRCode}
+                    >
+                      <QrCode size={20} color={themeColors.textMuted} style={tw`mb-1`} />
+                      <ThemedText type="caption" style={tw`text-xs`}>QR Code</ThemedText>
+                    </ThemedButton>
+                  </ThemedView>
+                )}
+
+                {/* Generate New Code Button */}
                 <ThemedButton
-                  variant="secondary"
-                  style={tw`p-4 flex-1 items-center`}
-                  onPress={handleQRCode}
+                  variant="outline"
+                  style={tw`py-3 px-6 w-full`}
+                  onPress={resetForm}
                 >
-                  <QrCode size={20} color={themeColors.textMuted} style={tw`mb-1`} />
-                  <ThemedText type="caption" style={tw`text-xs`}>QR Code</ThemedText>
+                  <ThemedText style={tw`font-semibold`}>Generate New Code</ThemedText>
                 </ThemedButton>
               </ThemedView>
-            )}
+            </ThemedView>
+          )}
+
+          {/* Info Section */}
+          <ThemedView style={[tw`rounded-2xl p-4 border mb-8`, 
+                              { backgroundColor: themeColors.info + '20', borderColor: themeColors.info + '40' }]}>
+            <ThemedText style={[tw`font-semibold mb-2`, { color: themeColors.info }]}>
+              How it works:
+            </ThemedText>
+            <ThemedText style={[tw`text-sm leading-5`, { color: themeColors.info + 'CC' }]}>
+              • Enter visitor's name and select duration{'\n'}
+              • Share the generated code with your visitor{'\n'}
+              • Visitor shows code to security at the gate{'\n'}
+              • Code automatically expires after set duration{'\n'}
+              • Each code can only be used once for security
+            </ThemedText>
           </ThemedView>
         </ThemedView>
-
-        {/* Generate/Refresh Button */}
-        <ThemedButton
-          variant="primary"
-          style={[tw`py-4 px-6 flex-row items-center justify-center mb-6`, 
-                 isGenerating && tw`opacity-70`]}
-          onPress={generateSecurityCode}
-          disabled={isGenerating}
-        >
-          {isGenerating ? (
-            <RefreshCw size={24} color="#ffffff" style={tw`mr-3`} />
-          ) : (
-            <Shield size={24} color="#ffffff" style={tw`mr-3`} />
-          )}
-          <ThemedText style={tw`text-white text-lg font-semibold`}>
-            {isGenerating ? 'Generating...' : securityCode ? 'Generate New Code' : 'Generate Code'}
-          </ThemedText>
-        </ThemedButton>
-
-        {/* Info Section */}
-        <ThemedView style={[tw`rounded-2xl p-4 border`, 
-                            { backgroundColor: themeColors.info + '20', borderColor: themeColors.info + '40' }]}>
-          <ThemedText style={[tw`font-semibold mb-2`, { color: themeColors.info }]}>
-            How it works:
-          </ThemedText>
-          <ThemedText style={[tw`text-sm leading-5`, { color: themeColors.info + 'CC' }]}>
-            • Show this code to the security guard at the gate{'\n'}
-            • Code is valid for 30 minutes from generation{'\n'}
-            • Generate a new code if the current one expires{'\n'}
-            • Each code can only be used once for security
-          </ThemedText>
-        </ThemedView>
-      </ThemedView>
+      </ScrollView>
     </ThemedView>
   );
 };
