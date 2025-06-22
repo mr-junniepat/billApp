@@ -12,7 +12,6 @@ import {
   Clock,
   Copy,
   History,
-  QrCode,
   RefreshCw,
   Share2,
   Shield,
@@ -20,6 +19,7 @@ import {
 } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { Alert, ScrollView, Share, StatusBar } from 'react-native';
+import DatePicker from 'react-native-date-picker';
 import tw from 'twrnc';
 
 const CodeGenerationScreen = () => {
@@ -37,6 +37,15 @@ const CodeGenerationScreen = () => {
   const [selectedDuration, setSelectedDuration] = useState(30); // minutes
   const [showDurationDropdown, setShowDurationDropdown] = useState(false);
   const [codeFor, setCodeFor] = useState('');
+  const [customTime, setCustomTime] = useState('');
+  const [useCustomTime, setUseCustomTime] = useState(false);
+  const [showCustomTimeInput, setShowCustomTimeInput] = useState(false);
+  const [useSpecificDateTime, setUseSpecificDateTime] = useState(false);
+  
+  // Date picker state
+  const [selectedDateTime, setSelectedDateTime] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [datePickerMode, setDatePickerMode] = useState('datetime'); // 'date', 'time', or 'datetime'
   
   // Code history state
   const [codeHistory, setCodeHistory] = useState([
@@ -74,14 +83,13 @@ const CodeGenerationScreen = () => {
   const [showHistory, setShowHistory] = useState(false);
 
   const durationOptions = [
-    { label: '15 minutes', value: 15 },
     { label: '30 minutes', value: 30 },
     { label: '1 hour', value: 60 },
     { label: '2 hours', value: 120 },
     { label: '4 hours', value: 240 },
-    { label: '6 hours', value: 360 },
-    { label: '12 hours', value: 720 },
-    { label: '24 hours', value: 1440 }
+    { label: '8 hours', value: 480 },
+    { label: 'Custom duration', value: 'custom' },
+    { label: 'Set specific time', value: 'datetime' }
   ];
 
   // Generate random 6-digit security code
@@ -91,12 +99,34 @@ const CodeGenerationScreen = () => {
       return;
     }
 
+    let expiryDate;
+    
+    if (useSpecificDateTime) {
+      // Use the selected date/time from date picker
+      if (selectedDateTime <= new Date()) {
+        Alert.alert('Error', 'Please select a future date and time');
+        return;
+      }
+      expiryDate = new Date(selectedDateTime);
+    } else if (useCustomTime) {
+      // Parse custom duration
+      const customMinutes = parseCustomTime(customTime);
+      if (customMinutes === null) {
+        Alert.alert('Error', 'Please enter a valid time format (e.g., "2h 30m", "45m", "1h")');
+        return;
+      }
+      expiryDate = new Date();
+      expiryDate.setMinutes(expiryDate.getMinutes() + customMinutes);
+    } else {
+      // Use preset duration
+      expiryDate = new Date();
+      expiryDate.setMinutes(expiryDate.getMinutes() + selectedDuration);
+    }
+
     setIsGenerating(true);
     
     setTimeout(() => {
       const code = Math.floor(100000 + Math.random() * 900000).toString();
-      const expiry = new Date();
-      expiry.setMinutes(expiry.getMinutes() + selectedDuration);
       const createdAt = new Date();
       
       // Add to history
@@ -105,8 +135,8 @@ const CodeGenerationScreen = () => {
         code: code,
         recipientName: recipientName,
         createdAt: createdAt,
-        expiresAt: expiry,
-        duration: selectedDuration,
+        expiresAt: expiryDate,
+        duration: useSpecificDateTime ? 'specific' : (useCustomTime ? parseCustomTime(customTime) : selectedDuration),
         isActive: true,
         isUsed: false
       };
@@ -114,7 +144,7 @@ const CodeGenerationScreen = () => {
       setCodeHistory(prev => [newCode, ...prev]);
       
       setSecurityCode(code);
-      setExpiryTime(expiry);
+      setExpiryTime(expiryDate);
       setCodeFor(recipientName);
       setIsActive(true);
       setIsGenerating(false);
@@ -175,14 +205,6 @@ const CodeGenerationScreen = () => {
     }
   };
 
-  const handleQRCode = () => {
-    if (!securityCode) {
-      Alert.alert('No Code', 'Generate a security code first');
-      return;
-    }
-    Alert.alert('QR Code', 'QR Code feature coming soon!');
-  };
-
   const resetForm = () => {
     setSecurityCode('');
     setExpiryTime(null);
@@ -191,16 +213,123 @@ const CodeGenerationScreen = () => {
     setCodeFor('');
     setRecipientName('');
     setSelectedDuration(30);
+    setUseCustomTime(false);
+    setUseSpecificDateTime(false);
+    setCustomTime('');
+    setShowCustomTimeInput(false);
+    setShowDatePicker(false);
+    setSelectedDateTime(new Date());
   };
 
   const selectDuration = (duration) => {
-    setSelectedDuration(duration);
+    if (duration === 'custom') {
+      setUseCustomTime(true);
+      setUseSpecificDateTime(false);
+      setShowCustomTimeInput(true);
+    } else if (duration === 'datetime') {
+      setUseSpecificDateTime(true);
+      setUseCustomTime(false);
+      setShowCustomTimeInput(true);
+      // Set default to 1 hour from now
+      const defaultTime = new Date();
+      defaultTime.setHours(defaultTime.getHours() + 1);
+      setSelectedDateTime(defaultTime);
+    } else {
+      setUseCustomTime(false);
+      setUseSpecificDateTime(false);
+      setShowCustomTimeInput(false);
+      setSelectedDuration(duration);
+    }
     setShowDurationDropdown(false);
   };
 
   const getDurationLabel = () => {
+    if (useSpecificDateTime) {
+      return `Until ${selectedDateTime.toLocaleDateString()} at ${selectedDateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    }
+    if (useCustomTime) {
+      return customTime ? `Custom: ${customTime}` : 'Custom duration';
+    }
     const option = durationOptions.find(opt => opt.value === selectedDuration);
     return option ? option.label : '30 minutes';
+  };
+
+  const openDatePicker = () => {
+    setShowDatePicker(true);
+  };
+
+  const onDatePickerConfirm = (date) => {
+    setSelectedDateTime(date);
+    setShowDatePicker(false);
+  };
+
+  const onDatePickerCancel = () => {
+    setShowDatePicker(false);
+  };
+
+  const parseCustomTime = (timeString) => {
+    if (!timeString.trim()) return null;
+    
+    // Remove extra spaces and convert to lowercase
+    const cleanTime = timeString.trim().toLowerCase();
+    
+    // Pattern to match various time formats
+    const patterns = [
+      // "2h 30m", "1h 15m", etc.
+      /^(\d+)h\s*(\d+)m?$/,
+      // "30m", "45m", etc.
+      /^(\d+)m?$/,
+      // "2h", "3h", etc.
+      /^(\d+)h$/,
+      // "2.5h", "1.25h", etc.
+      /^(\d*\.?\d+)h$/
+    ];
+    
+    let totalMinutes = 0;
+    
+    // Try pattern 1: "2h 30m"
+    let match = cleanTime.match(patterns[0]);
+    if (match) {
+      const hours = parseInt(match[1]);
+      const minutes = parseInt(match[2]);
+      totalMinutes = (hours * 60) + minutes;
+    }
+    // Try pattern 2: "30m" or just "30"
+    else if (match = cleanTime.match(patterns[1])) {
+      totalMinutes = parseInt(match[1]);
+    }
+    // Try pattern 3: "2h"
+    else if (match = cleanTime.match(patterns[2])) {
+      totalMinutes = parseInt(match[1]) * 60;
+    }
+    // Try pattern 4: "2.5h"
+    else if (match = cleanTime.match(patterns[3])) {
+      totalMinutes = Math.round(parseFloat(match[1]) * 60);
+    }
+    else {
+      return null; // Invalid format
+    }
+    
+    // Validate reasonable limits (1 minute to 7 days)
+    if (totalMinutes < 1 || totalMinutes > 10080) {
+      return null;
+    }
+    
+    return totalMinutes;
+  };
+
+  const formatCustomDuration = (minutes) => {
+    if (minutes < 60) {
+      return `${minutes}m`;
+    } else {
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
+      if (remainingMinutes === 0) {
+        return `${hours}h`;
+      } else {
+        return `${hours}h ${remainingMinutes}m`;
+      }
+    }
   };
 
   const getRelativeTime = (date) => {
@@ -339,7 +468,7 @@ const CodeGenerationScreen = () => {
                             {!codeItem.isUsed && !isExpired && (
                               <ThemedButton 
                                 variant="ghost" 
-                                style={tw`mr-2 p-2`}
+                                style={tw`p-2`}
                                 onPress={() => shareHistoryCode(codeItem)}
                               >
                                 <Share2 size={16} color={themeColors.textMuted} />
@@ -349,7 +478,7 @@ const CodeGenerationScreen = () => {
                             {!codeItem.isUsed && !isExpired && (
                               <ThemedButton 
                                 variant="ghost" 
-                                style={tw`p-2`}
+                                style={tw`p-2 ml-2`}
                                 onPress={() => markCodeAsUsed(codeItem.id)}
                               >
                                 <CheckCircle size={16} color={themeColors.success} />
@@ -435,6 +564,85 @@ const CodeGenerationScreen = () => {
                     ))}
                   </ThemedView>
                 )}
+
+                {/* Custom Time Input */}
+                {showCustomTimeInput && (
+                  <ThemedView style={tw`mt-4`}>
+                    {useSpecificDateTime ? (
+                      /* Specific Date & Time Picker */
+                      <ThemedView>
+                        <ThemedText type="caption" style={tw`text-sm mb-2`}>Set Expiry Date & Time</ThemedText>
+                        
+                        <ThemedButton
+                          variant="ghost"
+                          style={[tw`flex-row items-center justify-between p-4 rounded-2xl mb-4`, 
+                                 { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 }]}
+                          onPress={openDatePicker}
+                        >
+                          <ThemedView style={tw`flex-row items-center`}>
+                            <Calendar size={20} color={themeColors.textMuted} style={tw`mr-3`} />
+                            <ThemedView>
+                              <ThemedText style={tw`font-medium`}>
+                                {selectedDateTime.toLocaleDateString()}
+                              </ThemedText>
+                              <ThemedText type="caption" style={tw`text-xs`}>
+                                {selectedDateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </ThemedText>
+                            </ThemedView>
+                          </ThemedView>
+                          <Calendar size={16} color={themeColors.textMuted} />
+                        </ThemedButton>
+                        
+                        {selectedDateTime && (
+                          <ThemedView style={[tw`p-3 rounded-lg`, 
+                                            { backgroundColor: selectedDateTime <= new Date() ? 
+                                              themeColors.error + '20' : themeColors.success + '20' }]}>
+                            <ThemedText style={[tw`text-sm`, 
+                                              { color: selectedDateTime <= new Date() ? 
+                                                themeColors.error : themeColors.success }]}>
+                              {selectedDateTime <= new Date() ? 
+                                '✗ Please select a future date and time' : 
+                                `✓ Code expires: ${selectedDateTime.toLocaleString()}`
+                              }
+                            </ThemedText>
+                          </ThemedView>
+                        )}
+                      </ThemedView>
+                    ) : (
+                      /* Custom Duration Input */
+                      <ThemedView>
+                        <ThemedText type="caption" style={tw`text-sm mb-2`}>Enter Custom Duration</ThemedText>
+                        <ThemedInput
+                          icon={<Clock size={20} color={themeColors.textMuted} />}
+                          value={customTime}
+                          onChangeText={setCustomTime}
+                          placeholder="e.g., 2h 30m, 45m, 1.5h"
+                        />
+                        <ThemedText type="caption" style={tw`text-xs mt-1`}>
+                          Examples: "2h 30m", "45m", "1.5h", "90m"
+                        </ThemedText>
+                        
+                        {customTime && parseCustomTime(customTime) && (
+                          <ThemedView style={[tw`mt-2 p-2 rounded-lg`, 
+                                            { backgroundColor: themeColors.success + '20' }]}>
+                            <ThemedText style={[tw`text-xs`, { color: themeColors.success }]}>
+                              ✓ Duration: {formatCustomDuration(parseCustomTime(customTime))}
+                            </ThemedText>
+                          </ThemedView>
+                        )}
+                        
+                        {customTime && !parseCustomTime(customTime) && (
+                          <ThemedView style={[tw`mt-2 p-2 rounded-lg`, 
+                                            { backgroundColor: themeColors.error + '20' }]}>
+                            <ThemedText style={[tw`text-xs`, { color: themeColors.error }]}>
+                              ✗ Invalid format. Use: "2h 30m", "45m", or "1.5h"
+                            </ThemedText>
+                          </ThemedView>
+                        )}
+                      </ThemedView>
+                    )}
+                  </ThemedView>
+                )}
               </ThemedView>
 
               {/* Generate Button */}
@@ -501,7 +709,7 @@ const CodeGenerationScreen = () => {
                   <ThemedView style={tw`flex-row justify-center w-full mb-6`}>
                     <ThemedButton
                       variant="secondary"
-                      style={tw`p-4 mr-3 flex-1 items-center`}
+                      style={tw`p-4 mr-6 flex-1 items-center`}
                       onPress={copyToClipboard}
                     >
                       <Copy size={20} color={themeColors.textMuted} style={tw`mb-1`} />
@@ -510,20 +718,11 @@ const CodeGenerationScreen = () => {
                     
                     <ThemedButton
                       variant="secondary"
-                      style={tw`p-4 mr-3 flex-1 items-center`}
+                      style={tw`p-4 flex-1 items-center`}
                       onPress={shareCode}
                     >
                       <Share2 size={20} color={themeColors.textMuted} style={tw`mb-1`} />
                       <ThemedText type="caption" style={tw`text-xs`}>Share</ThemedText>
-                    </ThemedButton>
-
-                    <ThemedButton
-                      variant="secondary"
-                      style={tw`p-4 flex-1 items-center`}
-                      onPress={handleQRCode}
-                    >
-                      <QrCode size={20} color={themeColors.textMuted} style={tw`mb-1`} />
-                      <ThemedText type="caption" style={tw`text-xs`}>QR Code</ThemedText>
                     </ThemedButton>
                   </ThemedView>
                 )}
@@ -556,6 +755,20 @@ const CodeGenerationScreen = () => {
           </ThemedView>
         </ThemedView>
       </ScrollView>
+
+      {/* Date Picker Modal */}
+      <DatePicker
+        modal
+        open={showDatePicker}
+        date={selectedDateTime}
+        mode="datetime"
+        minimumDate={new Date()}
+        onConfirm={onDatePickerConfirm}
+        onCancel={onDatePickerCancel}
+        title="Select expiry date and time"
+        confirmText="Confirm"
+        cancelText="Cancel"
+      />
     </ThemedView>
   );
 };
