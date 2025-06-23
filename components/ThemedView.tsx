@@ -15,25 +15,25 @@ export function ThemedView({ style, variant = 'default', ...rest }: ThemedViewPr
         return {
           backgroundColor: colors.card,
           borderRadius: 24,
-          padding: 24,
+          padding: 10,
         };
       case 'surface':
         return {
           backgroundColor: colors.border,
           borderRadius: 16,
-          padding: 16,
+          padding: 10,
         };
       case 'primary':
         return {
           backgroundColor: '#10b981',
           borderRadius: 16,
-          padding: 16,
+          padding: 10,
         };
       case 'secondary':
         return {
           backgroundColor: colors.border,
           borderRadius: 16,
-          padding: 12,
+          padding: 6,
         };
       default:
         return {

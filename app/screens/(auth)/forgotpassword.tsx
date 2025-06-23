@@ -5,7 +5,7 @@ import { ThemedInput } from '@/components/ThemeInput';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useTheme } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import { ArrowRight, CheckCircle, Mail } from 'lucide-react-native';
+import { CheckCircle, Mail, Zap } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StatusBar } from 'react-native';
 import tw from 'twrnc';
@@ -41,7 +41,7 @@ export default function ForgotPasswordScreen() {
   };
 
   const navigateToSignIn = () => {
-    router.push('/(auth)/signin');
+    router.push('/screens/(auth)/signin');
   };
 
   return (
@@ -57,10 +57,29 @@ export default function ForgotPasswordScreen() {
         
         <ScrollView style={tw`flex-1`} showsVerticalScrollIndicator={false}>
           <ThemedView style={tw`px-6 pt-16 pb-8`}>
+            {/* Logo Section */}
+            <ThemedView style={tw`items-center mb-8`}>
+              {/* Option 1: Icon-based logo */}
+              <ThemedView style={[tw`w-24 h-24 rounded-full items-center justify-center mb-4`, 
+                { backgroundColor: themeColors.primary + '20' }]}>
+                <Zap size={48} color={themeColors.primary} />
+              </ThemedView>
+              
+              {/* Option 2: Image logo (uncomment to use) */}
+              {/* <Image 
+                source={require('@/assets/images/logo.png')} 
+                style={tw`w-32 h-32 mb-4`}
+                resizeMode="contain"
+              /> */}
+              
+              {/* App Name */}
+              <ThemedText style={tw`text-2xl font-bold`}>Bill App</ThemedText>
+            </ThemedView>
+
             {/* Header */}
-            <ThemedView style={tw`mb-12`}>
-              <ThemedText style={tw`text-4xl font-bold mb-2`}>Forgot Password?</ThemedText>
-              <ThemedText type="caption" style={tw`text-lg`}>
+            <ThemedView style={tw`mb-8`}>
+              <ThemedText style={tw`text-3xl font-bold mb-2 text-center`}>Forgot Password?</ThemedText>
+              <ThemedText type="caption" style={tw`text-base text-center`}>
                 {emailSent ? 
                   'Check your email for reset instructions' : 
                   'Enter your email to reset your password'
@@ -119,7 +138,7 @@ export default function ForgotPasswordScreen() {
                 {/* Reset Button */}
                 <ThemedButton
                   variant="primary"
-                  style={[tw`py-4 flex-row items-center justify-center mb-6`, 
+                  style={[tw`py-2 flex-row items-center justify-center mb-6`, 
                          isLoading && tw`opacity-70`]}
                   onPress={handleResetPassword}
                   disabled={isLoading}
@@ -132,7 +151,6 @@ export default function ForgotPasswordScreen() {
                   ) : (
                     <>
                       <ThemedText style={tw`text-white text-lg font-semibold mr-3`}>Send Reset Link</ThemedText>
-                      <ArrowRight size={20} color="#ffffff" />
                     </>
                   )}
                 </ThemedButton>
@@ -146,19 +164,6 @@ export default function ForgotPasswordScreen() {
                 </ThemedView>
               </ThemedView>
             )}
-
-            {/* Help Section */}
-            <ThemedView style={[tw`rounded-2xl p-4 mt-8 border`, 
-                              { backgroundColor: themeColors.info + '20', borderColor: themeColors.info + '40' }]}>
-              <ThemedText style={[tw`font-semibold mb-2`, { color: themeColors.info }]}>
-                Need Help?
-              </ThemedText>
-              <ThemedText style={[tw`text-sm leading-5`, { color: themeColors.info + 'CC' }]}>
-                • Check your spam/junk folder for the reset email{'\n'}
-                • Make sure you entered the correct email address{'\n'}
-                • Contact support if you don't receive the email within 10 minutes
-              </ThemedText>
-            </ThemedView>
           </ThemedView>
         </ScrollView>
       </ThemedView>

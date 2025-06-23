@@ -20,11 +20,11 @@ export function ThemedButton({
   const getSizeStyles = () => {
     switch (size) {
       case 'small':
-        return tw`py-2 px-4 rounded-xl`;
+        return tw`px-3 rounded-lg`;
       case 'large':
-        return tw`py-4 px-6 rounded-2xl`;
+        return tw`px-5 rounded-xl`;
       default:
-        return tw`py-3 px-5 rounded-xl`;
+        return tw`px-4 rounded-lg`;
     }
   };
 
@@ -65,6 +65,7 @@ export function ThemedButton({
         tw`items-center justify-center flex-row`,
         getSizeStyles(),
         getVariantStyle(),
+        { height: 50 },
         style,
       ]}
       {...rest}

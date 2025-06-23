@@ -10,10 +10,10 @@ import {
   Building2,
   ChevronRight,
   Clock,
+  Dumbbell,
   Eye,
   Home,
   MoreHorizontal,
-  Phone,
   Zap
 } from 'lucide-react-native';
 import React from 'react';
@@ -28,27 +28,29 @@ const DashboardScreen = ({
   const themeColors = useThemeColors();
 
   const billsData = [
-    {
-      id: 1,
-      icon: Phone,
-      title: 'Airtime',
-      color: themeColors.success,
-      onPress: () => Alert.alert('Airtime', 'Navigate to airtime purchase')
-    },
+
 
     {
-      id: 3,
+      id: 1,
       icon: Clock,
-      title: 'Betting',
+      title: 'Service Charge',
       color: colors.text,
       onPress: () => Alert.alert('Betting', 'Navigate to betting')
     },
   
     {
-      id: 5,
+      id: 2,
       icon: Zap,
       title: 'Electricity',
       color: themeColors.warning,
+      onPress: handleElectricityBill
+    },
+
+        {
+      id: 3,
+      icon: Dumbbell,
+      title: 'Gym',
+      color: themeColors.primary,
       onPress: handleElectricityBill
     },
 
@@ -216,7 +218,7 @@ const DashboardScreen = ({
                 {billsData.slice(rowIndex * 4, (rowIndex + 1) * 4).map((bill) => {
                   const IconComponent = bill.icon;
                   return (
-                    <ThemedView key={bill.id} style={tw`items-center w-16`}>
+                    <ThemedView key={bill.id} style={tw`flex-col items-center w-16`}>
                       <ThemedButton 
                         variant="ghost"
                         style={tw`items-center mb-2`}
@@ -226,7 +228,9 @@ const DashboardScreen = ({
                           <IconComponent size={24} color={bill.color} />
                         </ThemedView>
                       </ThemedButton>
-                      <ThemedText type="caption" style={tw`text-center text-xs`}>{bill.title}</ThemedText>
+                      <ThemedView>
+                        <ThemedText type="caption" style={tw`text-center text-xs`}>{bill.title}</ThemedText>
+                      </ThemedView>
                     </ThemedView>
                   );
                 })}
@@ -236,8 +240,8 @@ const DashboardScreen = ({
         </ThemedView>
 
         {/* Recent Transactions */}
-        <ThemedView style={tw`px-6 mb-8`}>
-          <ThemedView style={tw`flex-row items-center justify-between mb-4`}>
+        <ThemedView style={tw`px-8 mb-8`}>
+          <ThemedView style={tw`flex-row items-center justify-between mb-0`}>
             <ThemedView style={tw`flex-row items-center`}>
               <ThemedText type="subtitle">Recent Transaction</ThemedText>
             </ThemedView>
@@ -249,10 +253,9 @@ const DashboardScreen = ({
           {transactions.map((transaction) => {
             const IconComponent = transaction.icon;
             return (
-              <ThemedButton 
+              <ThemedView 
                 key={transaction.id}
-                variant="ghost"
-                style={[tw`flex-row items-center justify-between py-4 border-b`, { borderBottomColor: colors.border }]}
+                style={[tw`flex-row items-center justify-between py-2 border-b`, { borderBottomColor: colors.border }]}
               >
                 <ThemedView style={tw`flex-row items-center flex-1`}>
                   <ThemedView variant="surface" style={tw`w-12 h-12 rounded-2xl items-center justify-center mr-4`}>
@@ -263,6 +266,7 @@ const DashboardScreen = ({
                     <ThemedText type="caption">{transaction.subtitle}</ThemedText>
                   </ThemedView>
                 </ThemedView>
+
                 <ThemedView style={tw`items-end`}>
                   <ThemedText 
                     type={transaction.isNegative ? 'error' : 'success'}
@@ -272,7 +276,7 @@ const DashboardScreen = ({
                   </ThemedText>
                   <ThemedText type="caption" style={tw`text-xs`}>{transaction.status}</ThemedText>
                 </ThemedView>
-              </ThemedButton>
+              </ThemedView>
             );
           })}
         </ThemedView>

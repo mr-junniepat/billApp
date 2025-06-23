@@ -648,7 +648,7 @@ const CodeGenerationScreen = () => {
               {/* Generate Button */}
               <ThemedButton
                 variant="primary"
-                style={[tw`py-4 px-6 flex-row items-center justify-center`, 
+                style={[tw`py-2 px-6 flex-row items-center justify-center`, 
                        isGenerating && tw`opacity-70`]}
                 onPress={generateSecurityCode}
                 disabled={isGenerating}

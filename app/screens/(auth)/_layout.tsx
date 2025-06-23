@@ -12,9 +12,19 @@ export default function AuthLayout() {
         contentStyle: { backgroundColor: colors.background },
       }}
     >
-      <Stack.Screen name="signin" />
-      <Stack.Screen name="signup" />
-      <Stack.Screen name="forgot-password" />
+      <Stack.Screen name="signin" options={{ 
+            headerShown: false 
+          }} 
+      />
+      <Stack.Screen name="signup" options={{ 
+            headerShown: false 
+          }} 
+      />
+      <Stack.Screen name="forgotpassword"
+        options={{ 
+            headerShown: false 
+        }}  
+      />
     </Stack>
   );
 }

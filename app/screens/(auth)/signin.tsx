@@ -2,18 +2,20 @@ import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedInput } from '@/components/ThemeInput';
+import { useAuth } from '@/contexts/AuthContext';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useTheme } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import { ArrowRight, Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
+import { Eye, EyeOff, Lock, Mail, Zap } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StatusBar } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StatusBar } from 'react-native';
 import tw from 'twrnc';
 
 export default function SignInScreen() {
   const { colors } = useTheme();
   const themeColors = useThemeColors();
   const router = useRouter();
+  const { login } = useAuth();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -34,20 +36,33 @@ export default function SignInScreen() {
 
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Mock user data and token
+      const userData = {
+        id: '1',
+        email: email,
+        name: 'User Name'
+      };
+      const token = 'mock-auth-token';
+      
+      await login(userData, token);
+      
+    } catch (error) {
+      Alert.alert('Error', 'Failed to sign in. Please try again.');
+    } finally {
       setIsLoading(false);
-      // Navigate to main app
-      router.replace('/(tabs)');
-    }, 2000);
+    }
   };
 
   const navigateToSignUp = () => {
-    router.push('/(auth)/signup');
+    router.push('/screens/(auth)/signup');
   };
 
   const navigateToForgotPassword = () => {
-    router.push('/(auth)/forgot-password');
+    router.push('/screens/(auth)/forgotpassword');
   };
 
   return (
@@ -63,18 +78,28 @@ export default function SignInScreen() {
         
         <ScrollView style={tw`flex-1`} showsVerticalScrollIndicator={false}>
           <ThemedView style={tw`px-6 pt-16 pb-8`}>
+            {/* Logo Section */}
+            <ThemedView style={tw`items-center mb-8`}>
+              <ThemedView style={[tw`w-24 h-24 rounded-full items-center justify-center mb-4`, 
+                { backgroundColor: themeColors.primary + '20' }]}>
+                <Zap size={48} color={themeColors.primary} />
+              </ThemedView>
+              
+              <ThemedText style={tw`text-2xl font-bold`}>Bill App</ThemedText>
+            </ThemedView>
+
             {/* Header */}
-            <ThemedView style={tw`mb-12`}>
-              <ThemedText style={tw`text-4xl font-bold mb-2`}>Welcome Back</ThemedText>
-              <ThemedText type="caption" style={tw`text-lg`}>
+            <ThemedView style={tw`mb-6`}>
+              <ThemedText style={tw`text-3xl font-bold mb-2 text-center`}>Welcome Back</ThemedText>
+              <ThemedText type="caption" style={tw`text-base text-center`}>
                 Sign in to access your account
               </ThemedText>
             </ThemedView>
 
             {/* Form */}
-            <ThemedView style={tw`mb-8`}>
+            <ThemedView style={tw`mb-6`}>
               {/* Email Input */}
-              <ThemedView style={tw`mb-6`}>
+              <ThemedView style={tw`mb-4`}>
                 <ThemedText type="caption" style={tw`text-sm mb-2`}>Email Address</ThemedText>
                 <ThemedInput
                   icon={<Mail size={20} color={themeColors.textMuted} />}
@@ -87,7 +112,7 @@ export default function SignInScreen() {
               </ThemedView>
 
               {/* Password Input */}
-              <ThemedView style={tw`mb-6`}>
+              <ThemedView style={tw`mb-4`}>
                 <ThemedText type="caption" style={tw`text-sm mb-2`}>Password</ThemedText>
                 <ThemedInput
                   icon={<Lock size={20} color={themeColors.textMuted} />}
@@ -96,21 +121,18 @@ export default function SignInScreen() {
                   placeholder="Enter your password"
                   secureTextEntry={!showPassword}
                   rightIcon={
-                    <ThemedButton 
-                      variant="ghost" 
-                      onPress={() => setShowPassword(!showPassword)}
-                    >
+                    <Pressable onPress={() => setShowPassword(!showPassword)}>
                       {showPassword ? 
                         <EyeOff size={20} color={themeColors.textMuted} /> : 
                         <Eye size={20} color={themeColors.textMuted} />
                       }
-                    </ThemedButton>
+                    </Pressable>
                   }
                 />
               </ThemedView>
 
               {/* Forgot Password */}
-              <ThemedView style={tw`items-end mb-8`}>
+              <ThemedView style={tw`items-end mb-4`}>
                 <ThemedButton variant="ghost" onPress={navigateToForgotPassword}>
                   <ThemedText type="link">Forgot Password?</ThemedText>
                 </ThemedButton>
@@ -119,7 +141,7 @@ export default function SignInScreen() {
               {/* Sign In Button */}
               <ThemedButton
                 variant="primary"
-                style={[tw`py-4 flex-row items-center justify-center mb-6`, 
+                style={[tw`flex-row items-center justify-center mb-6`, 
                        isLoading && tw`opacity-70`]}
                 onPress={handleSignIn}
                 disabled={isLoading}
@@ -132,7 +154,6 @@ export default function SignInScreen() {
                 ) : (
                   <>
                     <ThemedText style={tw`text-white text-lg font-semibold mr-3`}>Sign In</ThemedText>
-                    <ArrowRight size={20} color="#ffffff" />
                   </>
                 )}
               </ThemedButton>
