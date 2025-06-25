@@ -19,7 +19,10 @@ import {
 } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { Alert, ScrollView, Share, StatusBar } from 'react-native';
-import DatePicker from 'react-native-date-picker';
+
+// REMOVE the DatePicker import completely for now
+// import DatePicker from 'react-native-date-picker';
+
 import tw from 'twrnc';
 
 const CodeGenerationScreen = () => {
@@ -42,10 +45,9 @@ const CodeGenerationScreen = () => {
   const [showCustomTimeInput, setShowCustomTimeInput] = useState(false);
   const [useSpecificDateTime, setUseSpecificDateTime] = useState(false);
   
-  // Date picker state
-  const [selectedDateTime, setSelectedDateTime] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [datePickerMode, setDatePickerMode] = useState('datetime'); // 'date', 'time', or 'datetime'
+  // Simple date/time input states (alternative to DatePicker)
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedTime, setSelectedTime] = useState('');
   
   // Code history state
   const [codeHistory, setCodeHistory] = useState([
@@ -53,8 +55,8 @@ const CodeGenerationScreen = () => {
       id: 1,
       code: '456789',
       recipientName: 'John Smith',
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-      expiresAt: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago (expired)
+      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+      expiresAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
       duration: 60,
       isActive: false,
       isUsed: true
@@ -63,8 +65,8 @@ const CodeGenerationScreen = () => {
       id: 2,
       code: '123456',
       recipientName: 'Sarah Johnson',
-      createdAt: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
-      expiresAt: new Date(Date.now() + 90 * 60 * 1000), // expires in 1.5 hours
+      createdAt: new Date(Date.now() - 30 * 60 * 1000),
+      expiresAt: new Date(Date.now() + 90 * 60 * 1000),
       duration: 120,
       isActive: true,
       isUsed: false
@@ -73,8 +75,8 @@ const CodeGenerationScreen = () => {
       id: 3,
       code: '789012',
       recipientName: 'Mike Wilson',
-      createdAt: new Date(Date.now() - 10 * 60 * 1000), // 10 minutes ago
-      expiresAt: new Date(Date.now() + 20 * 60 * 1000), // expires in 20 minutes
+      createdAt: new Date(Date.now() - 10 * 60 * 1000),
+      expiresAt: new Date(Date.now() + 20 * 60 * 1000),
       duration: 30,
       isActive: true,
       isUsed: false
@@ -101,26 +103,39 @@ const CodeGenerationScreen = () => {
 
     let expiryDate;
     
-    if (useSpecificDateTime) {
-      // Use the selected date/time from date picker
-      if (selectedDateTime <= new Date()) {
-        Alert.alert('Error', 'Please select a future date and time');
-        return;
+    try {
+      if (useSpecificDateTime) {
+        // Parse manual date/time input
+        if (!selectedDate || !selectedTime) {
+          Alert.alert('Error', 'Please enter both date and time');
+          return;
+        }
+        
+        const dateTimeString = `${selectedDate}T${selectedTime}:00`;
+        expiryDate = new Date(dateTimeString);
+        
+        if (isNaN(expiryDate.getTime()) || expiryDate <= new Date()) {
+          Alert.alert('Error', 'Please enter a valid future date and time');
+          return;
+        }
+      } else if (useCustomTime) {
+        // Parse custom duration
+        const customMinutes = parseCustomTime(customTime);
+        if (customMinutes === null) {
+          Alert.alert('Error', 'Please enter a valid time format (e.g., "2h 30m", "45m", "1h")');
+          return;
+        }
+        expiryDate = new Date();
+        expiryDate.setMinutes(expiryDate.getMinutes() + customMinutes);
+      } else {
+        // Use preset duration
+        expiryDate = new Date();
+        expiryDate.setMinutes(expiryDate.getMinutes() + selectedDuration);
       }
-      expiryDate = new Date(selectedDateTime);
-    } else if (useCustomTime) {
-      // Parse custom duration
-      const customMinutes = parseCustomTime(customTime);
-      if (customMinutes === null) {
-        Alert.alert('Error', 'Please enter a valid time format (e.g., "2h 30m", "45m", "1h")');
-        return;
-      }
-      expiryDate = new Date();
-      expiryDate.setMinutes(expiryDate.getMinutes() + customMinutes);
-    } else {
-      // Use preset duration
-      expiryDate = new Date();
-      expiryDate.setMinutes(expiryDate.getMinutes() + selectedDuration);
+    } catch (error) {
+      console.error('Error calculating expiry date:', error);
+      Alert.alert('Error', 'Failed to calculate expiry time. Please check your settings.');
+      return;
     }
 
     setIsGenerating(true);
@@ -148,7 +163,7 @@ const CodeGenerationScreen = () => {
       setCodeFor(recipientName);
       setIsActive(true);
       setIsGenerating(false);
-    }, 1500); // Simulate generation delay
+    }, 1500);
   };
 
   // Calculate time remaining
@@ -217,8 +232,8 @@ const CodeGenerationScreen = () => {
     setUseSpecificDateTime(false);
     setCustomTime('');
     setShowCustomTimeInput(false);
-    setShowDatePicker(false);
-    setSelectedDateTime(new Date());
+    setSelectedDate('');
+    setSelectedTime('');
   };
 
   const selectDuration = (duration) => {
@@ -230,10 +245,11 @@ const CodeGenerationScreen = () => {
       setUseSpecificDateTime(true);
       setUseCustomTime(false);
       setShowCustomTimeInput(true);
-      // Set default to 1 hour from now
-      const defaultTime = new Date();
-      defaultTime.setHours(defaultTime.getHours() + 1);
-      setSelectedDateTime(defaultTime);
+      // Set default date/time values
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      setSelectedDate(tomorrow.toISOString().split('T')[0]);
+      setSelectedTime('12:00');
     } else {
       setUseCustomTime(false);
       setUseSpecificDateTime(false);
@@ -245,7 +261,11 @@ const CodeGenerationScreen = () => {
 
   const getDurationLabel = () => {
     if (useSpecificDateTime) {
-      return `Until ${selectedDateTime.toLocaleDateString()} at ${selectedDateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      if (selectedDate && selectedTime) {
+        const date = new Date(`${selectedDate}T${selectedTime}`);
+        return `Until ${date.toLocaleDateString()} at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      }
+      return 'Set specific date & time';
     }
     if (useCustomTime) {
       return customTime ? `Custom: ${customTime}` : 'Custom duration';
@@ -254,63 +274,39 @@ const CodeGenerationScreen = () => {
     return option ? option.label : '30 minutes';
   };
 
-  const openDatePicker = () => {
-    setShowDatePicker(true);
-  };
-
-  const onDatePickerConfirm = (date) => {
-    setSelectedDateTime(date);
-    setShowDatePicker(false);
-  };
-
-  const onDatePickerCancel = () => {
-    setShowDatePicker(false);
-  };
-
   const parseCustomTime = (timeString) => {
     if (!timeString.trim()) return null;
     
-    // Remove extra spaces and convert to lowercase
     const cleanTime = timeString.trim().toLowerCase();
     
-    // Pattern to match various time formats
     const patterns = [
-      // "2h 30m", "1h 15m", etc.
       /^(\d+)h\s*(\d+)m?$/,
-      // "30m", "45m", etc.
       /^(\d+)m?$/,
-      // "2h", "3h", etc.
       /^(\d+)h$/,
-      // "2.5h", "1.25h", etc.
       /^(\d*\.?\d+)h$/
     ];
     
     let totalMinutes = 0;
     
-    // Try pattern 1: "2h 30m"
     let match = cleanTime.match(patterns[0]);
     if (match) {
       const hours = parseInt(match[1]);
       const minutes = parseInt(match[2]);
       totalMinutes = (hours * 60) + minutes;
     }
-    // Try pattern 2: "30m" or just "30"
     else if (match = cleanTime.match(patterns[1])) {
       totalMinutes = parseInt(match[1]);
     }
-    // Try pattern 3: "2h"
     else if (match = cleanTime.match(patterns[2])) {
       totalMinutes = parseInt(match[1]) * 60;
     }
-    // Try pattern 4: "2.5h"
     else if (match = cleanTime.match(patterns[3])) {
       totalMinutes = Math.round(parseFloat(match[1]) * 60);
     }
     else {
-      return null; // Invalid format
+      return null;
     }
     
-    // Validate reasonable limits (1 minute to 7 days)
     if (totalMinutes < 1 || totalMinutes > 10080) {
       return null;
     }
@@ -511,6 +507,7 @@ const CodeGenerationScreen = () => {
               )}
             </ThemedView>
           )}
+          
           {!securityCode ? (
             /* Code Creation Form */
             <ThemedView variant="card" style={[tw`p-6 mb-6 border`, { borderColor: colors.border }]}>
@@ -569,41 +566,61 @@ const CodeGenerationScreen = () => {
                 {showCustomTimeInput && (
                   <ThemedView style={tw`mt-4`}>
                     {useSpecificDateTime ? (
-                      /* Specific Date & Time Picker */
+                      /* Manual Date & Time Input */
                       <ThemedView>
                         <ThemedText type="caption" style={tw`text-sm mb-2`}>Set Expiry Date & Time</ThemedText>
                         
-                        <ThemedButton
-                          variant="ghost"
-                          style={[tw`flex-row items-center justify-between p-4 rounded-2xl mb-4`, 
-                                 { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 }]}
-                          onPress={openDatePicker}
-                        >
-                          <ThemedView style={tw`flex-row items-center`}>
-                            <Calendar size={20} color={themeColors.textMuted} style={tw`mr-3`} />
-                            <ThemedView>
-                              <ThemedText style={tw`font-medium`}>
-                                {selectedDateTime.toLocaleDateString()}
-                              </ThemedText>
-                              <ThemedText type="caption" style={tw`text-xs`}>
-                                {selectedDateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </ThemedText>
-                            </ThemedView>
+                        <ThemedView style={tw`flex-row space-x-4 mb-4`}>
+                          <ThemedView style={tw`flex-1`}>
+                            <ThemedText type="caption" style={tw`text-xs mb-2`}>Date (YYYY-MM-DD)</ThemedText>
+                            <ThemedInput
+                              icon={<Calendar size={20} color={themeColors.textMuted} />}
+                              value={selectedDate}
+                              onChangeText={setSelectedDate}
+                              placeholder="2024-12-25"
+                            />
                           </ThemedView>
-                          <Calendar size={16} color={themeColors.textMuted} />
-                        </ThemedButton>
+                          
+                          <ThemedView style={tw`flex-1`}>
+                            <ThemedText type="caption" style={tw`text-xs mb-2`}>Time (HH:MM)</ThemedText>
+                            <ThemedInput
+                              icon={<Clock size={20} color={themeColors.textMuted} />}
+                              value={selectedTime}
+                              onChangeText={setSelectedTime}
+                              placeholder="14:30"
+                            />
+                          </ThemedView>
+                        </ThemedView>
                         
-                        {selectedDateTime && (
+                        {selectedDate && selectedTime && (
                           <ThemedView style={[tw`p-3 rounded-lg`, 
-                                            { backgroundColor: selectedDateTime <= new Date() ? 
-                                              themeColors.error + '20' : themeColors.success + '20' }]}>
+                                            { backgroundColor: (() => {
+                                              try {
+                                                const testDate = new Date(`${selectedDate}T${selectedTime}`);
+                                                return testDate <= new Date() ? themeColors.error + '20' : themeColors.success + '20';
+                                              } catch {
+                                                return themeColors.error + '20';
+                                              }
+                                            })() }]}>
                             <ThemedText style={[tw`text-sm`, 
-                                              { color: selectedDateTime <= new Date() ? 
-                                                themeColors.error : themeColors.success }]}>
-                              {selectedDateTime <= new Date() ? 
-                                '✗ Please select a future date and time' : 
-                                `✓ Code expires: ${selectedDateTime.toLocaleString()}`
-                              }
+                                              { color: (() => {
+                                                try {
+                                                  const testDate = new Date(`${selectedDate}T${selectedTime}`);
+                                                  return testDate <= new Date() ? themeColors.error : themeColors.success;
+                                                } catch {
+                                                  return themeColors.error;
+                                                }
+                                              })() }]}>
+                              {(() => {
+                                try {
+                                  const testDate = new Date(`${selectedDate}T${selectedTime}`);
+                                  if (isNaN(testDate.getTime())) return '✗ Invalid date/time format';
+                                  if (testDate <= new Date()) return '✗ Please select a future date and time';
+                                  return `✓ Code expires: ${testDate.toLocaleString()}`;
+                                } catch {
+                                  return '✗ Invalid date/time format';
+                                }
+                              })()}
                             </ThemedText>
                           </ThemedView>
                         )}
@@ -756,19 +773,7 @@ const CodeGenerationScreen = () => {
         </ThemedView>
       </ScrollView>
 
-      {/* Date Picker Modal */}
-      <DatePicker
-        modal
-        open={showDatePicker}
-        date={selectedDateTime}
-        mode="datetime"
-        minimumDate={new Date()}
-        onConfirm={onDatePickerConfirm}
-        onCancel={onDatePickerCancel}
-        title="Select expiry date and time"
-        confirmText="Confirm"
-        cancelText="Cancel"
-      />
+     
     </ThemedView>
   );
 };

@@ -5,7 +5,7 @@ import { ThemedInput } from '@/components/ThemeInput';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useTheme } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import { Eye, EyeOff, Lock, Mail, Phone, User, Zap } from 'lucide-react-native';
+import { Eye, EyeOff, Lock, Mail, User, Zap } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StatusBar } from 'react-native';
 import tw from 'twrnc';
@@ -19,12 +19,9 @@ export default function SignUpScreen() {
     firstName: '',
     lastName: '',
     email: '',
-    phone: '',
-    password: '',
-    confirmPassword: ''
+    password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const updateField = (field, value) => {
@@ -32,10 +29,10 @@ export default function SignUpScreen() {
   };
 
   const handleSignUp = async () => {
-    const { firstName, lastName, email, password, confirmPassword } = formData;
+    const { firstName, lastName, email, password } = formData;
 
     if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()) {
-      Alert.alert('Error', 'Please fill in all required fields');
+      Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
@@ -47,11 +44,6 @@ export default function SignUpScreen() {
 
     if (password.length < 8) {
       Alert.alert('Error', 'Password must be at least 8 characters long');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
       return;
     }
 
@@ -85,20 +77,11 @@ export default function SignUpScreen() {
           <ThemedView style={tw`px-6 pt-16 pb-8`}>
             {/* Logo Section */}
             <ThemedView style={tw`items-center mb-8`}>
-              {/* Option 1: Icon-based logo */}
               <ThemedView style={[tw`w-24 h-24 rounded-full items-center justify-center mb-4`, 
                 { backgroundColor: themeColors.primary + '20' }]}>
                 <Zap size={48} color={themeColors.primary} />
               </ThemedView>
               
-              {/* Option 2: Image logo (uncomment to use) */}
-              {/* <Image 
-                source={require('@/assets/images/logo.png')} 
-                style={tw`w-32 h-32 mb-4`}
-                resizeMode="contain"
-              /> */}
-              
-              {/* App Name */}
               <ThemedText style={tw`text-2xl font-bold`}>Bill App</ThemedText>
             </ThemedView>
 
@@ -147,20 +130,8 @@ export default function SignUpScreen() {
                 />
               </ThemedView>
 
-              {/* Phone */}
-              <ThemedView style={tw`mb-6`}>
-                <ThemedText type="caption" style={tw`text-sm mb-2`}>Phone Number (Optional)</ThemedText>
-                <ThemedInput
-                  icon={<Phone size={20} color={themeColors.textMuted} />}
-                  value={formData.phone}
-                  onChangeText={(text) => updateField('phone', text)}
-                  placeholder="Enter your phone number"
-                  keyboardType="phone-pad"
-                />
-              </ThemedView>
-
               {/* Password */}
-              <ThemedView style={tw`mb-6`}>
+              <ThemedView style={tw`mb-8`}>
                 <ThemedText type="caption" style={tw`text-sm mb-2`}>Password</ThemedText>
                 <ThemedInput
                   icon={<Lock size={20} color={themeColors.textMuted} />}
@@ -181,30 +152,9 @@ export default function SignUpScreen() {
                     </ThemedButton>
                   }
                 />
-              </ThemedView>
-
-              {/* Confirm Password */}
-              <ThemedView style={tw`mb-8`}>
-                <ThemedText type="caption" style={tw`text-sm mb-2`}>Confirm Password</ThemedText>
-                <ThemedInput
-                  icon={<Lock size={20} color={themeColors.textMuted} />}
-                  value={formData.confirmPassword}
-                  onChangeText={(text) => updateField('confirmPassword', text)}
-                  placeholder="Confirm your password"
-                  secureTextEntry={!showConfirmPassword}
-                  rightIcon={
-                    <ThemedButton 
-                      variant="ghost" 
-                      onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                      style={tw`p-0`}
-                    >
-                      {showConfirmPassword ? 
-                        <EyeOff size={20} color={themeColors.textMuted} /> : 
-                        <Eye size={20} color={themeColors.textMuted} />
-                      }
-                    </ThemedButton>
-                  }
-                />
+                <ThemedText type="caption" style={tw`text-xs mt-1`}>
+                  Password must be at least 8 characters
+                </ThemedText>
               </ThemedView>
 
               {/* Sign Up Button */}
@@ -221,9 +171,7 @@ export default function SignUpScreen() {
                     <ThemedText style={tw`text-white text-lg font-semibold`}>Creating Account...</ThemedText>
                   </>
                 ) : (
-                  <>
-                    <ThemedText style={tw`text-white text-lg font-semibold mr-3`}>Create Account</ThemedText>
-                  </>
+                  <ThemedText style={tw`text-white text-lg font-semibold`}>Create Account</ThemedText>
                 )}
               </ThemedButton>
             </ThemedView>
