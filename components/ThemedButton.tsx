@@ -65,7 +65,7 @@ export function ThemedButton({
         tw`items-center justify-center flex-row`,
         getSizeStyles(),
         getVariantStyle(),
-        { height: 50 },
+        { minHeight: 50 },
         style,
       ]}
       {...rest}

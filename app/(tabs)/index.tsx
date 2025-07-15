@@ -5,19 +5,16 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import { useTheme } from '@react-navigation/native';
 import {
   ArrowDown,
-  ArrowUp,
   Bell,
   Building2,
-  ChevronRight,
   Clock,
   Dumbbell,
-  Eye,
   Home,
   MoreHorizontal,
   Zap
 } from 'lucide-react-native';
 import React from 'react';
-import { Alert, Image, ScrollView, StatusBar } from 'react-native';
+import { Alert, FlatList, Image, ScrollView, StatusBar, View } from 'react-native';
 import tw from 'twrnc';
 
 const DashboardScreen = ({ 
@@ -26,6 +23,10 @@ const DashboardScreen = ({
 }) => {
   const { colors } = useTheme();
   const themeColors = useThemeColors();
+
+  const handleElectricityBill = () => {
+    Alert.alert('Electricity Bill', 'Navigate to electricity bill payment');
+  };
 
   const billsData = [
 
@@ -115,10 +116,6 @@ const DashboardScreen = ({
     Alert.alert('Withdraw', 'Navigate to withdraw screen');
   };
 
-  const handleElectricityBill = () => {
-    Alert.alert('Electricity Bill', 'Navigate to electricity bill payment');
-  };
-
   const handleServiceCharge = () => {
     Alert.alert('Service Charge', 'Navigate to service charge payment');
   };
@@ -135,6 +132,85 @@ const DashboardScreen = ({
     Alert.alert('Notifications', 'Show notifications');
   };
 
+  const dueBills = [
+    { id: 1, title: 'Service Charge', maskedId: '3854', dueDate: '5th Jul', status: 'EARLY', amount: 40000, color: '#5B4FFF' },
+    { id: 2, title: 'Electricity', maskedId: '1289', dueDate: '10th Jul', status: 'DUE SOON', amount: 12000, color: '#FFB800' },
+    { id: 3, title: 'Gym Membership', maskedId: '9921', dueDate: '20th Jul', status: 'OVERDUE', amount: 5000, color: '#FF4F4F' },
+  ];
+
+  const [activeBillIndex, setActiveBillIndex] = React.useState(0);
+
+  const CARD_WIDTH = 300;
+
+  const renderBillCard = ({ item }: { item: typeof dueBills[0] }) => (
+    <ThemedView style={[
+      tw`rounded-3xl p-0 mx-2`,
+      { backgroundColor: item.color, width: CARD_WIDTH, minHeight: 160, justifyContent: 'flex-start' }
+    ]}>
+      {/* Top Row: Title and Masked ID */}
+      <ThemedView style={tw`flex-row justify-between items-center px-6 pt-6`}>
+        <ThemedText style={tw`text-white text-base font-semibold tracking-widest`}>{item.title}</ThemedText>
+        <ThemedText style={tw`text-white text-base font-semibold`}>•••• {item.maskedId}</ThemedText>
+      </ThemedView>
+      {/* Due Date and Status */}
+      <ThemedView style={tw`flex-row items-center px-6 mt-2 mb-4 justify-between`}>
+        <ThemedText style={tw`text-white text-sm`}>Due Date {item.dueDate}</ThemedText>
+        <ThemedView style={[tw`px-3 py-1 rounded-full`, { backgroundColor: 'rgba(255,255,255,0.3)' }]}> 
+          <ThemedText style={tw`text-white text-xs font-bold`}>{item.status}</ThemedText>
+        </ThemedView>
+      </ThemedView>
+      {/* Amount and Pay Button */}
+      <ThemedView style={tw`flex-row items-end justify-between px-6 pb-6 flex-1`}>
+        <ThemedText style={tw`text-white text-3xl font-extrabold`}>₦{item.amount.toLocaleString()}</ThemedText>
+        <ThemedButton
+          variant="ghost"
+          style={[tw`bg-white rounded-full px-8 py-2`, { minWidth: 80 }]} 
+          onPress={() => Alert.alert('Pay Bill', `Pay for ${item.title}`)}
+        >
+          <ThemedText style={[tw`text-base font-bold`, { color: item.color }]}>PAY</ThemedText>
+        </ThemedButton>
+      </ThemedView>
+    </ThemedView>
+  );
+
+  const getStatusProps = (status: string) => {
+    switch (status) {
+      case 'overdue':
+        return { color: '#ef4444', label: 'Overdue', icon: '⚠️' };
+      case 'due_soon':
+        return { color: '#f59e42', label: 'Due Soon', icon: '⏰' };
+      case 'paid':
+        return { color: '#10b981', label: 'Paid', icon: '✔️' };
+      default:
+        return { color: '#d1d5db', label: 'Unknown', icon: '❓' };
+    }
+  };
+
+  const renderTransactionItem = ({ item }: { item: typeof transactions[0] }) => (
+    <ThemedButton
+      variant="ghost"
+      style={tw`flex-row items-center justify-between py-4 px-2 rounded-xl`}
+      onPress={() => Alert.alert('Transaction Details', `${item.title}\n${item.subtitle}\n${item.amount}`)}
+    >
+      {/* Left: Icon */}
+      <ThemedView style={[tw`w-12 h-12 rounded-xl items-center justify-center mr-4`, { backgroundColor: '#F3F4F6' }]}> 
+        <item.icon size={24} color={item.iconColor} />
+      </ThemedView>
+      {/* Middle: Title and Subtitle */}
+      <ThemedView style={tw`flex-1`}> 
+        <ThemedText style={tw`text-base font-semibold mb-1`}>{item.title}</ThemedText>
+        <ThemedText style={tw`text-xs text-gray-500`}>{item.subtitle}</ThemedText>
+      </ThemedView>
+      {/* Right: Amount and Status */}
+      <ThemedView style={tw`items-end ml-2`}> 
+        <ThemedText style={[tw`text-base font-bold`, { color: item.isNegative ? '#ef4444' : '#10b981' }]}>{item.amount}</ThemedText>
+        <ThemedView style={[tw`px-2 py-0.5 rounded-full mt-1`, { backgroundColor: '#E5E7EB' }]}> 
+          <ThemedText style={tw`text-xs text-gray-700`}>{item.status}</ThemedText>
+        </ThemedView>
+      </ThemedView>
+    </ThemedButton>
+  );
+
   return (
     <ThemedView style={tw`flex-1`}>
       <StatusBar 
@@ -144,7 +220,7 @@ const DashboardScreen = ({
       
       <ScrollView style={tw`flex-1`} showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <ThemedView style={tw`flex-row items-center justify-between px-6 pt-12 pb-6`}>
+        <ThemedView style={tw`flex-row items-center justify-between px-6 pt-12 pb-0`}>
           <ThemedView style={tw`flex-row items-center`}>
             <ThemedView style={tw`w-10 h-10 bg-orange-400 rounded-full mr-3 overflow-hidden`}>
               <Image 
@@ -164,45 +240,37 @@ const DashboardScreen = ({
           </ThemedView>
         </ThemedView>
 
-        {/* Balance Card */}
-        <ThemedView style={tw`mx-6 mb-8`}>
-          <ThemedView style={[tw`rounded-3xl p-6`, { backgroundColor: themeColors.primary }]}>
-            <ThemedView style={tw`flex-row items-center justify-between mb-4`}>
-              <ThemedView style={tw`flex-row items-center`}>
-                <ThemedText style={tw`text-white text-sm opacity-90 mr-2`}>Total Balance</ThemedText>
-                <Eye size={16} color="#ffffff" opacity={0.9} />
-              </ThemedView>
-              <ThemedButton 
-                variant="ghost"
-                size="small"
-                style={tw`flex-row items-center`}
-                onPress={handleTransactionHistory}
-              >
-                <ThemedText style={tw`text-white text-sm mr-1`}>Transaction History</ThemedText>
-                <ChevronRight size={16} color="#ffffff" />
-              </ThemedButton>
-            </ThemedView>
-            <ThemedText style={tw`text-white text-4xl font-bold mb-6`}>₦ {balance}</ThemedText>
-            <ThemedView style={tw`flex-row justify-between`}>
-              <ThemedButton 
-                variant="ghost"
-                style={tw`bg-black bg-opacity-20 rounded-2xl px-6 py-3 flex-row items-center flex-1 mr-3`}
-                onPress={handleAddMoney}
-              >
-                <ArrowDown size={20} color="#ffffff" style={tw`mr-2`} />
-                <ThemedText style={tw`text-white font-semibold`}>Add Money</ThemedText>
-              </ThemedButton>
-              <ThemedButton 
-                variant="ghost"
-                style={tw`bg-black bg-opacity-20 rounded-2xl px-6 py-3 flex-row items-center flex-1 ml-3`}
-                onPress={handleWithdraw}
-              >
-                <ArrowUp size={20} color="#ffffff" style={tw`mr-2`} />
-                <ThemedText style={tw`text-white font-semibold`}>Withdraw</ThemedText>
-              </ThemedButton>
-            </ThemedView>
-          </ThemedView>
-        </ThemedView>
+        {/* Bills Card Carousel */}
+        <View style={[tw`w-full items-center justify-center`, { minHeight: 240 }]}> 
+          <FlatList
+            data={dueBills}
+            renderItem={renderBillCard}
+            keyExtractor={item => item.id.toString()}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            snapToInterval={CARD_WIDTH + 16}
+            decelerationRate="fast"
+            onScroll={e => {
+              const index = Math.round(e.nativeEvent.contentOffset.x / (CARD_WIDTH + 16));
+              setActiveBillIndex(index);
+            }}
+            contentContainerStyle={{ paddingHorizontal: 24, alignItems: 'center' }}
+            pagingEnabled
+            style={{ flexGrow: 0 }}
+          />
+          {/* Pagination Dots */}
+          <View style={tw`flex-row justify-center mt-2`}>
+            {dueBills.map((_, idx) => (
+              <View
+                key={idx}
+                style={[
+                  tw`mx-1 rounded-full`,
+                  { width: 8, height: 8, backgroundColor: idx === activeBillIndex ? '#5B4FFF' : '#E5E7EB' }
+                ]}
+              />
+            ))}
+          </View>
+        </View>
 
         {/* Pay a Bill Section */}
         <ThemedView style={tw`px-8 mb-8`}>
@@ -240,45 +308,21 @@ const DashboardScreen = ({
         </ThemedView>
 
         {/* Recent Transactions */}
-        <ThemedView style={tw`px-8 mb-8`}>
-          <ThemedView style={tw`flex-row items-center justify-between mb-0`}>
-            <ThemedView style={tw`flex-row items-center`}>
-              <ThemedText type="subtitle">Recent Transaction</ThemedText>
-            </ThemedView>
+        <ThemedView style={[tw`mx-6 mb-8 rounded-3xl p-0`, { backgroundColor: colors.card }]}> 
+          <ThemedView style={tw`flex-row items-center justify-between px-2 pt-2 pb-2`}> 
+            <ThemedText type="subtitle">Recent Transactions</ThemedText>
             <ThemedButton variant="ghost" size="small" onPress={handleSeeAllTransactions}>
               <ThemedText type="caption">See all</ThemedText>
             </ThemedButton>
           </ThemedView>
-
-          {transactions.map((transaction) => {
-            const IconComponent = transaction.icon;
-            return (
-              <ThemedView 
-                key={transaction.id}
-                style={[tw`flex-row items-center justify-between py-2 border-b`, { borderBottomColor: colors.border }]}
-              >
-                <ThemedView style={tw`flex-row items-center flex-1`}>
-                  <ThemedView variant="surface" style={tw`w-12 h-12 rounded-2xl items-center justify-center mr-4`}>
-                    <IconComponent size={20} color={transaction.iconColor} />
-                  </ThemedView>
-                  <ThemedView style={tw`flex-1`}>
-                    <ThemedText style={tw`font-semibold mb-1`}>{transaction.title}</ThemedText>
-                    <ThemedText type="caption">{transaction.subtitle}</ThemedText>
-                  </ThemedView>
-                </ThemedView>
-
-                <ThemedView style={tw`items-end`}>
-                  <ThemedText 
-                    type={transaction.isNegative ? 'error' : 'success'}
-                    style={tw`font-semibold mb-1`}
-                  >
-                    {transaction.amount}
-                  </ThemedText>
-                  <ThemedText type="caption" style={tw`text-xs`}>{transaction.status}</ThemedText>
-                </ThemedView>
-              </ThemedView>
-            );
-          })}
+          <FlatList
+            data={transactions}
+            renderItem={renderTransactionItem}
+            keyExtractor={item => item.id.toString()}
+            ItemSeparatorComponent={() => <View style={tw`h-px bg-gray-200 mx-6`} />}
+            contentContainerStyle={tw`px-2 pb-4`}
+            scrollEnabled={false}
+          />
         </ThemedView>
       </ScrollView>
     </ThemedView>

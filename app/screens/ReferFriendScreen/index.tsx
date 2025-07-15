@@ -4,7 +4,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { ThemedInput } from '@/components/ThemeInput';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useTheme } from '@react-navigation/native';
-import { ArrowLeft, Copy, Gift, Mail, MessageSquare, Share2, Users } from 'lucide-react-native';
+import { ArrowLeft, Copy, Gift, Mail, Share2, Users } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Alert, ScrollView, Share, StatusBar } from 'react-native';
 import tw from 'twrnc';
@@ -137,37 +137,6 @@ const ReferFriendScreen = ({ onBack }) => {
               <Mail size={20} color="#ffffff" style={tw`mr-2`} />
               <ThemedText style={tw`text-white font-semibold`}>Send Invitation</ThemedText>
             </ThemedButton>
-          </ThemedView>
-
-          {/* Social Sharing */}
-          <ThemedView variant="card" style={tw`p-6 mb-6`}>
-            <ThemedText type="subtitle" style={tw`mb-4`}>Share on Social Media</ThemedText>
-            <ThemedView style={tw`flex-row justify-between`}>
-              <ThemedButton
-                style={[tw`p-4 flex-1 items-center mr-2 rounded-2xl`, 
-                       { backgroundColor: '#25D366' }]} // WhatsApp green
-                onPress={() => handleSocialShare('WhatsApp')}
-              >
-                <MessageSquare size={24} color="#ffffff" style={tw`mb-2`} />
-                <ThemedText style={tw`text-white text-sm font-medium`}>WhatsApp</ThemedText>
-              </ThemedButton>
-              <ThemedButton
-                style={[tw`p-4 flex-1 items-center mx-1 rounded-2xl`, 
-                       { backgroundColor: '#1877F2' }]} // Facebook blue
-                onPress={() => handleSocialShare('Facebook')}
-              >
-                <Share2 size={24} color="#ffffff" style={tw`mb-2`} />
-                <ThemedText style={tw`text-white text-sm font-medium`}>Facebook</ThemedText>
-              </ThemedButton>
-              <ThemedButton
-                style={[tw`p-4 flex-1 items-center ml-2 rounded-2xl`, 
-                       { backgroundColor: '#1DA1F2' }]} // Twitter blue
-                onPress={() => handleSocialShare('Twitter')}
-              >
-                <Share2 size={24} color="#ffffff" style={tw`mb-2`} />
-                <ThemedText style={tw`text-white text-sm font-medium`}>Twitter</ThemedText>
-              </ThemedButton>
-            </ThemedView>
           </ThemedView>
 
           {/* Rewards Info */}

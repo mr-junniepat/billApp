@@ -19,10 +19,6 @@ import {
 } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { Alert, ScrollView, Share, StatusBar } from 'react-native';
-
-// REMOVE the DatePicker import completely for now
-// import DatePicker from 'react-native-date-picker';
-
 import tw from 'twrnc';
 
 const CodeGenerationScreen = () => {
@@ -40,12 +36,10 @@ const CodeGenerationScreen = () => {
   const [selectedDuration, setSelectedDuration] = useState(30); // minutes
   const [showDurationDropdown, setShowDurationDropdown] = useState(false);
   const [codeFor, setCodeFor] = useState('');
-  const [customTime, setCustomTime] = useState('');
-  const [useCustomTime, setUseCustomTime] = useState(false);
-  const [showCustomTimeInput, setShowCustomTimeInput] = useState(false);
   const [useSpecificDateTime, setUseSpecificDateTime] = useState(false);
+  const [showCustomTimeInput, setShowCustomTimeInput] = useState(false);
   
-  // Simple date/time input states (alternative to DatePicker)
+  // Simple date/time input states
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   
@@ -84,13 +78,15 @@ const CodeGenerationScreen = () => {
   ]);
   const [showHistory, setShowHistory] = useState(false);
 
+  // Simplified duration options - only preset durations + specific time
   const durationOptions = [
     { label: '30 minutes', value: 30 },
     { label: '1 hour', value: 60 },
     { label: '2 hours', value: 120 },
     { label: '4 hours', value: 240 },
     { label: '8 hours', value: 480 },
-    { label: 'Custom duration', value: 'custom' },
+    { label: '12 hours', value: 720 },
+    { label: '24 hours', value: 1440 },
     { label: 'Set specific time', value: 'datetime' }
   ];
 
@@ -118,15 +114,6 @@ const CodeGenerationScreen = () => {
           Alert.alert('Error', 'Please enter a valid future date and time');
           return;
         }
-      } else if (useCustomTime) {
-        // Parse custom duration
-        const customMinutes = parseCustomTime(customTime);
-        if (customMinutes === null) {
-          Alert.alert('Error', 'Please enter a valid time format (e.g., "2h 30m", "45m", "1h")');
-          return;
-        }
-        expiryDate = new Date();
-        expiryDate.setMinutes(expiryDate.getMinutes() + customMinutes);
       } else {
         // Use preset duration
         expiryDate = new Date();
@@ -151,7 +138,7 @@ const CodeGenerationScreen = () => {
         recipientName: recipientName,
         createdAt: createdAt,
         expiresAt: expiryDate,
-        duration: useSpecificDateTime ? 'specific' : (useCustomTime ? parseCustomTime(customTime) : selectedDuration),
+        duration: useSpecificDateTime ? 'specific' : selectedDuration,
         isActive: true,
         isUsed: false
       };
@@ -228,22 +215,15 @@ const CodeGenerationScreen = () => {
     setCodeFor('');
     setRecipientName('');
     setSelectedDuration(30);
-    setUseCustomTime(false);
     setUseSpecificDateTime(false);
-    setCustomTime('');
     setShowCustomTimeInput(false);
     setSelectedDate('');
     setSelectedTime('');
   };
 
   const selectDuration = (duration) => {
-    if (duration === 'custom') {
-      setUseCustomTime(true);
-      setUseSpecificDateTime(false);
-      setShowCustomTimeInput(true);
-    } else if (duration === 'datetime') {
+    if (duration === 'datetime') {
       setUseSpecificDateTime(true);
-      setUseCustomTime(false);
       setShowCustomTimeInput(true);
       // Set default date/time values
       const tomorrow = new Date();
@@ -251,7 +231,6 @@ const CodeGenerationScreen = () => {
       setSelectedDate(tomorrow.toISOString().split('T')[0]);
       setSelectedTime('12:00');
     } else {
-      setUseCustomTime(false);
       setUseSpecificDateTime(false);
       setShowCustomTimeInput(false);
       setSelectedDuration(duration);
@@ -267,65 +246,8 @@ const CodeGenerationScreen = () => {
       }
       return 'Set specific date & time';
     }
-    if (useCustomTime) {
-      return customTime ? `Custom: ${customTime}` : 'Custom duration';
-    }
     const option = durationOptions.find(opt => opt.value === selectedDuration);
     return option ? option.label : '30 minutes';
-  };
-
-  const parseCustomTime = (timeString) => {
-    if (!timeString.trim()) return null;
-    
-    const cleanTime = timeString.trim().toLowerCase();
-    
-    const patterns = [
-      /^(\d+)h\s*(\d+)m?$/,
-      /^(\d+)m?$/,
-      /^(\d+)h$/,
-      /^(\d*\.?\d+)h$/
-    ];
-    
-    let totalMinutes = 0;
-    
-    let match = cleanTime.match(patterns[0]);
-    if (match) {
-      const hours = parseInt(match[1]);
-      const minutes = parseInt(match[2]);
-      totalMinutes = (hours * 60) + minutes;
-    }
-    else if (match = cleanTime.match(patterns[1])) {
-      totalMinutes = parseInt(match[1]);
-    }
-    else if (match = cleanTime.match(patterns[2])) {
-      totalMinutes = parseInt(match[1]) * 60;
-    }
-    else if (match = cleanTime.match(patterns[3])) {
-      totalMinutes = Math.round(parseFloat(match[1]) * 60);
-    }
-    else {
-      return null;
-    }
-    
-    if (totalMinutes < 1 || totalMinutes > 10080) {
-      return null;
-    }
-    
-    return totalMinutes;
-  };
-
-  const formatCustomDuration = (minutes) => {
-    if (minutes < 60) {
-      return `${minutes}m`;
-    } else {
-      const hours = Math.floor(minutes / 60);
-      const remainingMinutes = minutes % 60;
-      if (remainingMinutes === 0) {
-        return `${hours}h`;
-      } else {
-        return `${hours}h ${remainingMinutes}m`;
-      }
-    }
   };
 
   const getRelativeTime = (date) => {
@@ -562,100 +484,63 @@ const CodeGenerationScreen = () => {
                   </ThemedView>
                 )}
 
-                {/* Custom Time Input */}
-                {showCustomTimeInput && (
+                {/* Specific Date & Time Input */}
+                {showCustomTimeInput && useSpecificDateTime && (
                   <ThemedView style={tw`mt-4`}>
-                    {useSpecificDateTime ? (
-                      /* Manual Date & Time Input */
-                      <ThemedView>
-                        <ThemedText type="caption" style={tw`text-sm mb-2`}>Set Expiry Date & Time</ThemedText>
-                        
-                        <ThemedView style={tw`flex-row space-x-4 mb-4`}>
-                          <ThemedView style={tw`flex-1`}>
-                            <ThemedText type="caption" style={tw`text-xs mb-2`}>Date (YYYY-MM-DD)</ThemedText>
-                            <ThemedInput
-                              icon={<Calendar size={20} color={themeColors.textMuted} />}
-                              value={selectedDate}
-                              onChangeText={setSelectedDate}
-                              placeholder="2024-12-25"
-                            />
-                          </ThemedView>
-                          
-                          <ThemedView style={tw`flex-1`}>
-                            <ThemedText type="caption" style={tw`text-xs mb-2`}>Time (HH:MM)</ThemedText>
-                            <ThemedInput
-                              icon={<Clock size={20} color={themeColors.textMuted} />}
-                              value={selectedTime}
-                              onChangeText={setSelectedTime}
-                              placeholder="14:30"
-                            />
-                          </ThemedView>
-                        </ThemedView>
-                        
-                        {selectedDate && selectedTime && (
-                          <ThemedView style={[tw`p-3 rounded-lg`, 
-                                            { backgroundColor: (() => {
-                                              try {
-                                                const testDate = new Date(`${selectedDate}T${selectedTime}`);
-                                                return testDate <= new Date() ? themeColors.error + '20' : themeColors.success + '20';
-                                              } catch {
-                                                return themeColors.error + '20';
-                                              }
-                                            })() }]}>
-                            <ThemedText style={[tw`text-sm`, 
-                                              { color: (() => {
-                                                try {
-                                                  const testDate = new Date(`${selectedDate}T${selectedTime}`);
-                                                  return testDate <= new Date() ? themeColors.error : themeColors.success;
-                                                } catch {
-                                                  return themeColors.error;
-                                                }
-                                              })() }]}>
-                              {(() => {
-                                try {
-                                  const testDate = new Date(`${selectedDate}T${selectedTime}`);
-                                  if (isNaN(testDate.getTime())) return '✗ Invalid date/time format';
-                                  if (testDate <= new Date()) return '✗ Please select a future date and time';
-                                  return `✓ Code expires: ${testDate.toLocaleString()}`;
-                                } catch {
-                                  return '✗ Invalid date/time format';
-                                }
-                              })()}
-                            </ThemedText>
-                          </ThemedView>
-                        )}
+                    <ThemedText type="caption" style={tw`text-sm mb-2`}>Set Expiry Date & Time</ThemedText>
+                    
+                    <ThemedView style={tw`flex-row space-x-4 mb-4`}>
+                      <ThemedView style={tw`flex-1`}>
+                        <ThemedText type="caption" style={tw`text-xs mb-2`}>Date (YYYY-MM-DD)</ThemedText>
+                        <ThemedInput
+                          icon={<Calendar size={20} color={themeColors.textMuted} />}
+                          value={selectedDate}
+                          onChangeText={setSelectedDate}
+                          placeholder="2024-12-25"
+                        />
                       </ThemedView>
-                    ) : (
-                      /* Custom Duration Input */
-                      <ThemedView>
-                        <ThemedText type="caption" style={tw`text-sm mb-2`}>Enter Custom Duration</ThemedText>
+                      
+                      <ThemedView style={tw`flex-1`}>
+                        <ThemedText type="caption" style={tw`text-xs mb-2`}>Time (HH:MM)</ThemedText>
                         <ThemedInput
                           icon={<Clock size={20} color={themeColors.textMuted} />}
-                          value={customTime}
-                          onChangeText={setCustomTime}
-                          placeholder="e.g., 2h 30m, 45m, 1.5h"
+                          value={selectedTime}
+                          onChangeText={setSelectedTime}
+                          placeholder="14:30"
                         />
-                        <ThemedText type="caption" style={tw`text-xs mt-1`}>
-                          Examples: "2h 30m", "45m", "1.5h", "90m"
+                      </ThemedView>
+                    </ThemedView>
+                    
+                    {selectedDate && selectedTime && (
+                      <ThemedView style={[tw`p-3 rounded-lg`, 
+                                        { backgroundColor: (() => {
+                                          try {
+                                            const testDate = new Date(`${selectedDate}T${selectedTime}`);
+                                            return testDate <= new Date() ? themeColors.error + '20' : themeColors.success + '20';
+                                          } catch {
+                                            return themeColors.error + '20';
+                                          }
+                                        })() }]}>
+                        <ThemedText style={[tw`text-sm`, 
+                                          { color: (() => {
+                                            try {
+                                              const testDate = new Date(`${selectedDate}T${selectedTime}`);
+                                              return testDate <= new Date() ? themeColors.error : themeColors.success;
+                                            } catch {
+                                              return themeColors.error;
+                                            }
+                                          })() }]}>
+                          {(() => {
+                            try {
+                              const testDate = new Date(`${selectedDate}T${selectedTime}`);
+                              if (isNaN(testDate.getTime())) return '✗ Invalid date/time format';
+                              if (testDate <= new Date()) return '✗ Please select a future date and time';
+                              return `✓ Code expires: ${testDate.toLocaleString()}`;
+                            } catch {
+                              return '✗ Invalid date/time format';
+                            }
+                          })()}
                         </ThemedText>
-                        
-                        {customTime && parseCustomTime(customTime) && (
-                          <ThemedView style={[tw`mt-2 p-2 rounded-lg`, 
-                                            { backgroundColor: themeColors.success + '20' }]}>
-                            <ThemedText style={[tw`text-xs`, { color: themeColors.success }]}>
-                              ✓ Duration: {formatCustomDuration(parseCustomTime(customTime))}
-                            </ThemedText>
-                          </ThemedView>
-                        )}
-                        
-                        {customTime && !parseCustomTime(customTime) && (
-                          <ThemedView style={[tw`mt-2 p-2 rounded-lg`, 
-                                            { backgroundColor: themeColors.error + '20' }]}>
-                            <ThemedText style={[tw`text-xs`, { color: themeColors.error }]}>
-                              ✗ Invalid format. Use: "2h 30m", "45m", or "1.5h"
-                            </ThemedText>
-                          </ThemedView>
-                        )}
                       </ThemedView>
                     )}
                   </ThemedView>
@@ -772,8 +657,6 @@ const CodeGenerationScreen = () => {
           </ThemedView>
         </ThemedView>
       </ScrollView>
-
-     
     </ThemedView>
   );
 };

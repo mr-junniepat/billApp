@@ -13,15 +13,13 @@ import {
   Settings as SettingsIcon,
   Smartphone,
   Star,
-  Sun,
-  Users
+  Sun
 } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Alert, Image, Linking, Platform, ScrollView, StatusBar } from 'react-native';
 import tw from 'twrnc';
 import AccountSettingsScreen from '../screens/AccountSettingsScreen';
 import HelpScreen from '../screens/HelpScreen';
-import ReferFriendScreen from '../screens/ReferFriendScreen';
 import ReportScamScreen from '../screens/ReportScamScreen';
 
 const SettingsScreen = () => {
@@ -60,7 +58,6 @@ const SettingsScreen = () => {
           text: 'Light',
           onPress: () => {
             setThemeMode('light');
-            // Here you would implement actual theme switching logic
             Alert.alert('Theme Changed', 'Light theme selected');
           }
         },
@@ -68,7 +65,6 @@ const SettingsScreen = () => {
           text: 'Dark',
           onPress: () => {
             setThemeMode('dark');
-            // Here you would implement actual theme switching logic
             Alert.alert('Theme Changed', 'Dark theme selected');
           }
         },
@@ -76,7 +72,6 @@ const SettingsScreen = () => {
           text: 'System',
           onPress: () => {
             setThemeMode('system');
-            // Here you would implement actual theme switching logic
             Alert.alert('Theme Changed', 'System theme selected');
           }
         },
@@ -126,11 +121,11 @@ const SettingsScreen = () => {
   const getThemeIcon = () => {
     switch (themeMode) {
       case 'light':
-        return <Sun size={18} color={themeColors.warning} />;
+        return <Sun size={20} color={themeColors.warning} />;
       case 'dark':
-        return <Moon size={18} color={colors.text} />;
+        return <Moon size={20} color={colors.text} />;
       default:
-        return <Smartphone size={18} color={colors.text} />;
+        return <Smartphone size={20} color={colors.text} />;
     }
   };
 
@@ -153,11 +148,7 @@ const SettingsScreen = () => {
   if (currentScreen === 'help') {
     return <HelpScreen onBack={handleBack} />;
   }
-  
-  if (currentScreen === 'refer') {
-    return <ReferFriendScreen onBack={handleBack} />;
-  }
-  
+
   if (currentScreen === 'report') {
     return <ReportScamScreen onBack={handleBack} />;
   }
@@ -169,10 +160,14 @@ const SettingsScreen = () => {
         backgroundColor={colors.background} 
       />
       
-      <ScrollView style={tw`flex-1`} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={tw`flex-1`} 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={tw`pb-8`}
+      >
         {/* Header */}
-        <ThemedView style={tw`px-6 pt-12 pb-8`}>
-          <ThemedText type="title" style={tw`text-xl`}>Settings</ThemedText>
+        <ThemedView style={tw`px-6 pt-16 pb-8`}>
+          <ThemedText type="title" style={tw`text-3xl font-bold`}>Settings</ThemedText>
         </ThemedView>
 
         {/* User Profile Section */}
@@ -183,141 +178,129 @@ const SettingsScreen = () => {
             onPress={handleAccountSettings}
           >
             <ThemedView style={tw`flex-row items-center flex-1`}>
-              <ThemedView style={tw`w-12 h-12 rounded-full mr-4 overflow-hidden`}>
+              <ThemedView style={tw`w-16 h-16 rounded-full mr-4 overflow-hidden`}>
                 <Image 
                   source={{ uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face' }}
                   style={tw`w-full h-full`}
                 />
               </ThemedView>
               <ThemedView style={tw`flex-1`}>
-                <ThemedText type="caption">{userEmail}</ThemedText>
-                <ThemedText type="subtitle">{userName}</ThemedText>
+                <ThemedText type="caption" style={tw`text-sm mb-1 opacity-60`}>{userEmail}</ThemedText>
+                <ThemedText type="subtitle" style={tw`text-xl font-bold`}>{userName}</ThemedText>
               </ThemedView>
             </ThemedView>
-            <ChevronRight size={20} color={colors.text} />
+            <ChevronRight size={24} color={colors.text} />
           </ThemedButton>
         </ThemedView>
 
         {/* Settings List */}
-        <ThemedView style={tw`px-2 mx-6 rounded-3xl`} variant="card">
+        <ThemedView 
+          style={[tw`mx-6 rounded-3xl`, { backgroundColor: colors.card }]}
+        >
           {/* Account Settings */}
           <ThemedButton
             variant="ghost"
-            style={[tw`flex-row items-center border-b`, { borderBottomColor: colors.border }]}
+            style={[tw`flex-row items-center py-4 px-6 border-b`, { borderBottomColor: colors.border }]}
             onPress={handleAccountSettings}
           >
-            <ThemedView variant="surface" style={tw`w-10 h-10 rounded-xl items-center justify-center mr-4`}>
-              <SettingsIcon size={18} color={colors.text} />
+            <ThemedView variant="surface" style={tw`w-11 h-11 rounded-xl items-center justify-center mr-4 p-0`}>
+              <SettingsIcon size={20} color={colors.text} />
             </ThemedView>
             <ThemedView style={tw`flex-1`}>
-              <ThemedText style={tw`font-medium text-base mb-1`}>Account Settings</ThemedText>
-              <ThemedText type="caption">Manage your account and security preferences.</ThemedText>
+              <ThemedText style={tw`font-semibold text-base mb-1`}>Account Settings</ThemedText>
+              <ThemedText type="caption" style={tw`text-sm opacity-60`}>Manage your account and security preferences</ThemedText>
             </ThemedView>
-            <ChevronRight size={18} color={colors.text} />
+            <ChevronRight size={20} color={colors.text} />
           </ThemedButton>
 
           {/* Theme Switcher */}
           <ThemedButton
             variant="ghost"
-            style={[tw`flex-row items-center py-5 border-b`, { borderBottomColor: colors.border }]}
+            style={[tw`flex-row items-center py-4 px-6 border-b`, { borderBottomColor: colors.border }]}
             onPress={handleThemeChange}
           >
-            <ThemedView variant="surface" style={tw`w-10 h-10 rounded-xl items-center justify-center mr-4`}>
+            <ThemedView variant="surface" style={tw`w-11 h-11 rounded-xl items-center justify-center mr-4 p-0`}>
               {getThemeIcon()}
             </ThemedView>
             <ThemedView style={tw`flex-1`}>
-              <ThemedText style={tw`font-medium text-base mb-1`}>Appearance</ThemedText>
-              <ThemedText type="caption">{getThemeDescription()}</ThemedText>
+              <ThemedText style={tw`font-semibold text-base mb-1`}>Appearance</ThemedText>
+              <ThemedText type="caption" style={tw`text-sm opacity-60`}>{getThemeDescription()}</ThemedText>
             </ThemedView>
             <ThemedView style={tw`flex-row items-center`}>
-              <ThemedText type="caption" style={tw`mr-2 capitalize`}>{themeMode}</ThemedText>
-              <ChevronRight size={18} color={colors.text} />
+              <ThemedText type="caption" style={tw`mr-3 capitalize text-sm font-medium opacity-60`}>{themeMode}</ThemedText>
+              <ChevronRight size={20} color={colors.text} />
             </ThemedView>
           </ThemedButton>
 
-          {/* Need a Help */}
+          {/* Need Help */}
           <ThemedButton
             variant="ghost"
-            style={[tw`flex-row items-center py-5 border-b`, { borderBottomColor: colors.border }]}
+            style={[tw`flex-row items-center py-4 px-6 border-b`, { borderBottomColor: colors.border }]}
             onPress={handleNeedHelp}
           >
-            <ThemedView variant="surface" style={tw`w-10 h-10 rounded-xl items-center justify-center mr-4`}>
-              <HelpCircle size={18} color={colors.text} />
+            <ThemedView variant="surface" style={tw`w-11 h-11 rounded-xl items-center justify-center mr-4 p-0`}>
+              <HelpCircle size={20} color={colors.text} />
             </ThemedView>
             <ThemedView style={tw`flex-1`}>
-              <ThemedText style={tw`font-medium text-base mb-1`}>Need a Help</ThemedText>
-              <ThemedText type="caption">Talk to our customer service.</ThemedText>
+              <ThemedText style={tw`font-semibold text-base mb-1`}>Need Help</ThemedText>
+              <ThemedText type="caption" style={tw`text-sm opacity-60`}>Talk to our customer service</ThemedText>
             </ThemedView>
-            <ChevronRight size={18} color={colors.text} />
+            <ChevronRight size={20} color={colors.text} />
           </ThemedButton>
 
-          {/* Refer a Friend */}
-          <ThemedButton
-            variant="ghost"
-            style={[tw`flex-row items-center py-5 border-b`, { borderBottomColor: colors.border }]}
-            onPress={handleReferFriend}
-          >
-            <ThemedView variant="surface" style={tw`w-10 h-10 rounded-xl items-center justify-center mr-4`}>
-              <Users size={18} color={colors.text} />
-            </ThemedView>
-            <ThemedView style={tw`flex-1`}>
-              <ThemedText style={tw`font-medium text-base mb-1`}>Refer a Friend</ThemedText>
-              <ThemedText type="caption">Tell a friend or family about us.</ThemedText>
-            </ThemedView>
-            <ChevronRight size={18} color={colors.text} />
-          </ThemedButton>
+     
 
           {/* Report a Scam */}
           <ThemedButton
             variant="ghost"
-            style={[tw`flex-row items-center py-5 border-b`, { borderBottomColor: colors.border }]}
+            style={[tw`flex-row items-center py-4 px-6 border-b`, { borderBottomColor: colors.border }]}
             onPress={handleReportScam}
           >
-            <ThemedView variant="surface" style={tw`w-10 h-10 rounded-xl items-center justify-center mr-4`}>
-              <AlertTriangle size={18} color={themeColors.error} />
+            <ThemedView variant="surface" style={tw`w-11 h-11 rounded-xl items-center justify-center mr-4 p-0`}>
+              <AlertTriangle size={20} color={themeColors.error} />
             </ThemedView>
             <ThemedView style={tw`flex-1`}>
-              <ThemedText style={tw`font-medium text-base mb-1`}>Report a Scam</ThemedText>
-              <ThemedText type="caption">Report or log form of fraudulent activity.</ThemedText>
+              <ThemedText style={tw`font-semibold text-base mb-1`}>Report a Scam</ThemedText>
+              <ThemedText type="caption" style={tw`text-sm opacity-60`}>Report fraudulent activity</ThemedText>
             </ThemedView>
-            <ChevronRight size={18} color={colors.text} />
+            <ChevronRight size={20} color={colors.text} />
           </ThemedButton>
 
           {/* Rate Us */}
           <ThemedButton
             variant="ghost"
-            style={[tw`flex-row items-center py-5 border-b`, { borderBottomColor: colors.border }]}
+            style={[tw`flex-row items-center py-4 px-6 border-b`, { borderBottomColor: colors.border }]}
             onPress={handleRateUs}
           >
-            <ThemedView variant="surface" style={tw`w-10 h-10 rounded-xl items-center justify-center mr-4`}>
-              <Star size={18} color={themeColors.warning} />
+            <ThemedView variant="surface" style={tw`w-11 h-11 rounded-xl items-center justify-center mr-4 p-0`}>
+              <Star size={20} color={themeColors.warning} />
             </ThemedView>
             <ThemedView style={tw`flex-1`}>
-              <ThemedText style={tw`font-medium text-base mb-1`}>Rate Us</ThemedText>
-              <ThemedText type="caption">Give us a rating on the app store.</ThemedText>
+              <ThemedText style={tw`font-semibold text-base mb-1`}>Rate Us</ThemedText>
+              <ThemedText type="caption" style={tw`text-sm opacity-60`}>Give us a rating on the app store</ThemedText>
             </ThemedView>
-            <ChevronRight size={18} color={colors.text} />
+            <ChevronRight size={20} color={colors.text} />
           </ThemedButton>
 
           {/* Sign Out */}
           <ThemedButton
             variant="ghost"
-            style={tw`flex-row items-center py-5`}
+            style={tw`flex-row items-center py-4 px-6`}
             onPress={handleSignOut}
           >
-            <ThemedView variant="surface" style={tw`w-10 h-10 rounded-xl items-center justify-center mr-4`}>
-              <LogOut size={18} color={themeColors.error} />
+            <ThemedView variant="surface" style={tw`w-11 h-11 rounded-xl items-center justify-center mr-4 p-0`}>
+              <LogOut size={20} color={themeColors.error} />
             </ThemedView>
             <ThemedView style={tw`flex-1`}>
-              <ThemedText type="error" style={tw`font-medium text-base mb-1`}>Sign Out</ThemedText>
-              <ThemedText type="caption">Logout of your account.</ThemedText>
+              <ThemedText type="error" style={tw`font-semibold text-base mb-1`}>Sign Out</ThemedText>
+              <ThemedText type="caption" style={tw`text-sm opacity-60`}>Logout of your account</ThemedText>
             </ThemedView>
-            <ChevronRight size={18} color={themeColors.error} />
+            <ChevronRight size={20} color={themeColors.error} />
           </ThemedButton>
         </ThemedView>
 
         {/* Bottom Spacing */}
-        <ThemedView style={tw`h-32`} />
+        <ThemedView style={tw`h-24`} />
       </ScrollView>
     </ThemedView>
   );

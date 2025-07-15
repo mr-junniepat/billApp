@@ -19,7 +19,7 @@ export function ThemedView({ style, variant = 'default', ...rest }: ThemedViewPr
         };
       case 'surface':
         return {
-          backgroundColor: colors.border,
+          backgroundColor: colors.background === '#000000' ? '#1a1a1a' : '#f5f5f5', // Dark gray for dark mode, light gray for light mode
           borderRadius: 16,
           padding: 10,
         };
@@ -31,7 +31,7 @@ export function ThemedView({ style, variant = 'default', ...rest }: ThemedViewPr
         };
       case 'secondary':
         return {
-          backgroundColor: colors.border,
+          backgroundColor: colors.background === '#000000' ? '#2a2a2a' : '#e5e5e5', // Slightly different shade than surface
           borderRadius: 16,
           padding: 6,
         };
